@@ -7,6 +7,7 @@ from app.schemas import ControlResponse
 from app.services.control_parser import parse_control_response
 from app.services.interaction_log import append_jsonl, save_log
 from app.services.project_updater import apply_updates, updates_summary
+from app.version import get_app_version
 
 
 def build_context() -> dict:
@@ -24,6 +25,7 @@ def build_context() -> dict:
     return {
         "runtime": {
             "name": "AI项目管家",
+            "version": get_app_version(),
             "role": "外部 Agent 使用的个人项目经理工程框架",
             "principle": "用户自然语言描述，Agent 负责读取、判断、写入、维护和可视化。",
         },

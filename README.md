@@ -28,6 +28,7 @@
 ## 当前能力
 
 - 本地单用户，无登录
+- 版本号从 `pyproject.toml` 读取，并在导出上下文中返回
 - 项目总览与项目详情页
 - 系统级判断展示
 - 近期项目事件流
@@ -36,6 +37,16 @@
 - SQLite 存储
 - `logs/interactions.jsonl` 记录 Agent 交互
 - 可选内置 LLM 代码保留，但默认不作为核心入口
+
+## Skills
+
+仓库内置一个给外部 Agent 使用的技能：
+
+```text
+skills/project-manager-runtime/
+```
+
+它约定了 Agent 如何读取上下文、判断是否写入、应用 JSON 更新、记录低频使用反馈，并保证日常使用不会产生 Git 记录。使用记录写入 `.agent-workspace/usage/usage.jsonl`，该目录被 Git 忽略。
 
 ## Agent 协议
 

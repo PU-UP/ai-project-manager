@@ -1,0 +1,7 @@
+interface:
+  display_name: "Project Manager Runtime"
+  short_description: "Maintain project state through this repo"
+  default_prompt: "Use $project-manager-runtime to read project context, update project records, and keep the workspace clean."
+
+policy:
+  allow_implicit_invocation: true

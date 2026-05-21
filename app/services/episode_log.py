@@ -34,6 +34,7 @@ def append_episode(
         renamed = result.get("renamed", [])
         updated = result.get("updated", [])
         constraint_updated = result.get("constraint_updated", [])
+        memory_updated = result.get("memory_updated", [])
         archived = result.get("archived", [])
         deleted = result.get("deleted", [])
         events = result.get("events", [])
@@ -42,6 +43,7 @@ def append_episode(
             + renamed
             + updated
             + constraint_updated
+            + memory_updated
             + archived
             + deleted
             + events
@@ -65,6 +67,7 @@ def append_episode(
             "renamed": renamed,
             "updated": updated,
             "constraint_updated": constraint_updated,
+            "memory_updated": memory_updated,
             "archived": archived,
             "deleted": deleted,
             "events": events,

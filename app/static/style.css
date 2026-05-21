@@ -904,6 +904,7 @@ body {
   font-size: 1.1rem !important;
   font-weight: 500;
   color: var(--text) !important;
+  margin-bottom: 1rem !important;
 }
 
 .detail-card--wide {
@@ -915,6 +916,112 @@ body {
   background: var(--surface-elevated);
   border-radius: var(--radius-sm);
   border-left: 3px solid var(--text-muted);
+}
+
+.memory-brief-grid,
+.memory-list-grid,
+.control-notes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.memory-list-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.memory-field,
+.memory-list-block,
+.control-notes > div {
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-elevated);
+}
+
+.memory-field span,
+.control-notes span,
+.progress-top span {
+  display: block;
+  margin-bottom: 0.35rem;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.memory-field p,
+.control-notes p,
+.progress-block p {
+  font-size: 0.9rem;
+}
+
+.memory-field--brief {
+  margin-top: 0.85rem;
+}
+
+.progress-block {
+  margin-top: 0.85rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(212, 168, 83, 0.16);
+  border-radius: var(--radius-sm);
+  background: rgba(212, 168, 83, 0.07);
+}
+
+.progress-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.progress-top span {
+  margin-bottom: 0;
+}
+
+.progress-top strong {
+  font-family: var(--mono);
+  color: var(--accent);
+  font-size: 0.9rem;
+}
+
+.progress-track {
+  height: 0.45rem;
+  margin-bottom: 0.65rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), #f6d08a);
+}
+
+.memory-list-block h3 {
+  margin: 0 0 0.65rem;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.memory-list-block ul {
+  margin: 0;
+  padding-left: 1rem;
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+  line-height: 1.6;
+}
+
+.memory-list-block li + li {
+  margin-top: 0.4rem;
+}
+
+.metric-list--control {
+  margin: 0.35rem 0 1rem;
 }
 
 .detail-card--meta {
@@ -1019,6 +1126,12 @@ body {
   }
 
   .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .memory-brief-grid,
+  .memory-list-grid,
+  .control-notes {
     grid-template-columns: 1fr;
   }
 

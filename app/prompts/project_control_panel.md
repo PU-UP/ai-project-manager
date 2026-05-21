@@ -45,6 +45,8 @@
 19. project_events 用来记录事实、反馈、决策、风险、想法和阻塞；project_updates 用来改变项目当前判断。
 20. 项目重命名使用 project_renames，不要通过直接数据库维护绕过协议。
 21. 项目约束变化使用 project_constraint_updates；不要把约束改写塞进 latest_update。
+22. project_memory_updates 用来维护项目长期记忆，而不是记录每条进展；普通事实优先写 project_events。
+23. 只有项目初衷、当前目标、阶段进度、关键判断、已验证事实、未验证问题或讨论摘要发生变化时，才使用 project_memory_updates。
 
 ## 字段枚举
 
@@ -116,6 +118,29 @@
       "reason": "调整约束原因"
     }
   ],
+  "project_memory_updates": [
+    {
+      "project_name": "智能生活助手",
+      "origin": "减少日常低价值生活决策成本。",
+      "current_goal": "用消息推送验证晚餐推荐和周末安排两个场景是否真的减少决策成本。",
+      "progress_percent": 30,
+      "progress_note": "已完成项目合并和约束设定，尚未开始真实推送验证。",
+      "key_judgements": [
+        "不做复杂 App，先验证消息推送是否有效。",
+        "晚餐推荐和周末安排可以合并为轻量生活决策助手。",
+        "当前风险是范围膨胀，而不是技术实现。"
+      ],
+      "validated_facts": [
+        "用户确认将晚餐推荐和周末去哪玩合并。",
+        "当前约束是不做复杂 App。"
+      ],
+      "open_questions": [
+        "消息推送是否真的能减少决策成本？"
+      ],
+      "discussion_brief": "这是一个验证轻量生活决策辅助是否有价值的项目。当前阶段不做 App，只通过消息推送验证晚餐推荐和周末安排两个场景是否能减少用户决策成本。",
+      "reason": "项目合并后需要形成可供后续讨论的长期记忆摘要。"
+    }
+  ],
   "project_events": [
     {
       "project_name": "项目名称（必须与已有项目精确匹配）",
@@ -159,5 +184,10 @@
 - project_updates 中只包含需要更新的项目。
 - project_renames 只在用户明确表达项目名称变化、合并后改名或当前名称不再准确时使用；新名称不得与已有项目冲突。
 - project_constraint_updates 只在项目边界、防蔓延规则或约束表述确实变化时使用。
+- project_memory_updates 用于压缩事件流和维护长期可读层；不要每次普通进展都机械更新。
+- 项目刚创建、合并、重命名、阶段变化、用户要求总结、形成关键判断或事件流需要压缩时，可以使用 project_memory_updates。
+- 不确定的内容写入 open_questions，不要写成 validated_facts。
+- progress_percent 是阶段判断，不是精确工程指标。
+- discussion_brief 要短，但足以让 Agent 后续讨论时不用用户重述项目背景。
 - project_events 中只包含值得保留的事件，不要把每句话都机械记录。
 - project_deletions 默认 mode=archive；只有用户明确要求“彻底删除/移除数据”时才使用 mode=delete。

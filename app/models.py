@@ -57,10 +57,29 @@ CREATE TABLE IF NOT EXISTS projects (
     control_action_note TEXT NOT NULL DEFAULT '',
     latest_update TEXT NOT NULL DEFAULT '',
     project_constraint TEXT NOT NULL DEFAULT '',
+    origin TEXT NOT NULL DEFAULT '',
+    current_goal TEXT NOT NULL DEFAULT '',
+    progress_percent INTEGER NOT NULL DEFAULT 0,
+    progress_note TEXT NOT NULL DEFAULT '',
+    key_judgements TEXT NOT NULL DEFAULT '[]',
+    validated_facts TEXT NOT NULL DEFAULT '[]',
+    open_questions TEXT NOT NULL DEFAULT '[]',
+    discussion_brief TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
 );
 """
+
+PROJECT_MEMORY_COLUMNS = {
+    "origin": "TEXT NOT NULL DEFAULT ''",
+    "current_goal": "TEXT NOT NULL DEFAULT ''",
+    "progress_percent": "INTEGER NOT NULL DEFAULT 0",
+    "progress_note": "TEXT NOT NULL DEFAULT ''",
+    "key_judgements": "TEXT NOT NULL DEFAULT '[]'",
+    "validated_facts": "TEXT NOT NULL DEFAULT '[]'",
+    "open_questions": "TEXT NOT NULL DEFAULT '[]'",
+    "discussion_brief": "TEXT NOT NULL DEFAULT ''",
+}
 
 CREATE_LOGS_TABLE = """
 CREATE TABLE IF NOT EXISTS logs (

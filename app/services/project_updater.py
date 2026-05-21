@@ -9,6 +9,7 @@ from app.schemas import (
     ProjectCreation,
     ProjectDeletion,
     ProjectEventInput,
+    ProjectMemoryUpdate,
     ProjectRename,
     ProjectUpdate,
     row_to_event_dict,
@@ -25,6 +26,21 @@ UPDATABLE_FIELDS = (
     "control_action",
     "control_action_note",
     "latest_update",
+)
+
+MEMORY_TEXT_FIELDS = (
+    "origin",
+    "current_goal",
+    "progress_note",
+    "discussion_brief",
+)
+MEMORY_JSON_FIELDS = (
+    "key_judgements",
+    "validated_facts",
+    "open_questions",
+)
+MEMORY_INT_FIELDS = (
+    "progress_percent",
 )
 
 
@@ -129,6 +145,42 @@ def update_project_constraint(
     return project["name"]
 
 
+def update_project_memory(
+    conn,
+    item: ProjectMemoryUpdate,
+    project: dict,
+    now: str,
+) -> str:
+    sets: list[str] = []
+    values: list = []
+
+    for field in MEMORY_TEXT_FIELDS + MEMORY_INT_FIELDS:
+        val = getattr(item, field, None)
+        if val is None:
+            continue
+        sets.append(f"{field} = ?")
+        values.append(val)
+
+    for field in MEMORY_JSON_FIELDS:
+        val = getattr(item, field, None)
+        if val is None:
+            continue
+        sets.append(f"{field} = ?")
+        values.append(json.dumps(val, ensure_ascii=False))
+
+    if not sets:
+        return project["name"]
+
+    sets.append("updated_at = ?")
+    values.append(now)
+    values.append(project["id"])
+    conn.execute(
+        f"UPDATE projects SET {', '.join(sets)} WHERE id = ?",
+        values,
+    )
+    return project["name"]
+
+
 def create_project(conn, item: ProjectCreation, now: str) -> str:
     conn.execute(
         """
@@ -212,6 +264,7 @@ def apply_updates(
     renamed: list[str] = []
     updated: list[str] = []
     constraint_updated: list[str] = []
+    memory_updated: list[str] = []
     archived: list[str] = []
     deleted: list[str] = []
     events: list[str] = []
@@ -310,6 +363,29 @@ def apply_updates(
         except Exception as e:
             invalid.append({"project": item.project_name, "error": str(e)})
 
+    for item in response.project_memory_updates:
+        lookup_name = renamed_lookup.get(_normalize_name(item.project_name), item.project_name)
+        project = match_project(lookup_name, projects)
+        if not project:
+            skipped.append(item.project_name)
+            continue
+        try:
+            memory_updated.append(update_project_memory(conn, item, project, now))
+            for p in projects:
+                if p["id"] == project["id"]:
+                    for field in MEMORY_TEXT_FIELDS + MEMORY_INT_FIELDS:
+                        val = getattr(item, field, None)
+                        if val is not None:
+                            p[field] = val
+                    for field in MEMORY_JSON_FIELDS:
+                        val = getattr(item, field, None)
+                        if val is not None:
+                            p[field] = val
+                    p["updated_at"] = now
+                    break
+        except Exception as e:
+            invalid.append({"project": item.project_name, "error": str(e)})
+
     for item in response.project_deletions:
         lookup_name = renamed_lookup.get(_normalize_name(item.project_name), item.project_name)
         project = match_project(lookup_name, projects)
@@ -346,6 +422,7 @@ def apply_updates(
         "renamed": renamed,
         "updated": updated,
         "constraint_updated": constraint_updated,
+        "memory_updated": memory_updated,
         "archived": archived,
         "deleted": deleted,
         "events": events,
@@ -369,6 +446,10 @@ def updates_summary(response: ControlResponse) -> str:
             "project_constraint_updates": [
                 u.model_dump(exclude_none=True)
                 for u in response.project_constraint_updates
+            ],
+            "project_memory_updates": [
+                u.model_dump(exclude_none=True)
+                for u in response.project_memory_updates
             ],
             "project_events": [
                 u.model_dump(exclude_none=True) for u in response.project_events

@@ -20,14 +20,38 @@
 </header>
 
 <section class="detail-grid">
-  <div class="detail-card detail-card--highlight">
-    <h2>控制动作</h2>
-    <p class="detail-action-note">{{ project.control_action_note }}</p>
+  <div class="detail-card detail-card--highlight detail-card--wide">
+    <h2>项目简报</h2>
+    <div class="memory-brief-grid">
+      <div class="memory-field">
+        <span>项目初衷</span>
+        <p>{{ project.origin or '暂无项目初衷记录' }}</p>
+      </div>
+      <div class="memory-field">
+        <span>当前目标</span>
+        <p>{{ project.current_goal or '暂无当前目标记录' }}</p>
+      </div>
+    </div>
+    <div class="progress-block">
+      <div class="progress-top">
+        <span>阶段进度</span>
+        <strong>{{ project.progress_percent or 0 }}%</strong>
+      </div>
+      <div class="progress-track" aria-hidden="true">
+        <div class="progress-fill" style="width: {{ project.progress_percent or 0 }}%"></div>
+      </div>
+      <p>{{ project.progress_note or '暂无阶段进度说明' }}</p>
+    </div>
+    <div class="memory-field memory-field--brief">
+      <span>讨论摘要</span>
+      <p>{{ project.discussion_brief or '暂无讨论摘要' }}</p>
+    </div>
   </div>
 
-  <div class="detail-card">
-    <h2>维度评分</h2>
-    <dl class="metric-list">
+  <div class="detail-card detail-card--wide">
+    <h2>当前控制</h2>
+    <p class="detail-action-note">{{ project.control_action_note }}</p>
+    <dl class="metric-list metric-list--control">
       <div class="metric-row">
         <dt>价值</dt>
         <dd>{{ level_bar(project.value_score) }}<span class="metric-val">{{ project.value_score }}/5</span></dd>
@@ -41,21 +65,63 @@
         <dd>{{ level_bar(project.human_intervention_level) }}<span class="metric-val">{{ project.human_intervention_level }}/5</span></dd>
       </div>
     </dl>
+    <div class="control-notes">
+      <div>
+        <span>当前风险</span>
+        <p>{{ project.risk_note or '暂无风险记录' }}</p>
+      </div>
+      <div>
+        <span>项目约束</span>
+        <p>{{ project.constraint or '暂无项目约束' }}</p>
+      </div>
+    </div>
   </div>
 
   <div class="detail-card detail-card--wide">
-    <h2>当前风险</h2>
-    <p>{{ project.risk_note }}</p>
+    <h2>关键记忆</h2>
+    <div class="memory-list-grid">
+      <div class="memory-list-block">
+        <h3>关键判断</h3>
+        {% if project.key_judgements %}
+        <ul>
+          {% for item in project.key_judgements %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="empty-inline">暂无关键判断</p>
+        {% endif %}
+      </div>
+      <div class="memory-list-block">
+        <h3>已验证事实</h3>
+        {% if project.validated_facts %}
+        <ul>
+          {% for item in project.validated_facts %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="empty-inline">暂无已验证事实</p>
+        {% endif %}
+      </div>
+      <div class="memory-list-block">
+        <h3>未验证问题</h3>
+        {% if project.open_questions %}
+        <ul>
+          {% for item in project.open_questions %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+        {% else %}
+        <p class="empty-inline">暂无未验证问题</p>
+        {% endif %}
+      </div>
+    </div>
   </div>
 
   <div class="detail-card detail-card--wide">
     <h2>最近进展</h2>
-    <p>{{ project.latest_update }}</p>
-  </div>
-
-  <div class="detail-card detail-card--wide detail-card--constraint">
-    <h2>项目约束</h2>
-    <p>{{ project.constraint }}</p>
+    <p>{{ project.latest_update or '暂无最近进展' }}</p>
   </div>
 
   <div class="detail-card detail-card--wide">

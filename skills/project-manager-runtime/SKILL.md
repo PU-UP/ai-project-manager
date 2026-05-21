@@ -5,7 +5,7 @@ description: Use this repository as an external-Agent personal project manager r
 
 # Project Manager Runtime
 
-Skill version: `0.4.0`
+Skill version: `0.5.0`
 
 Use this skill to operate the repository as a project-manager runtime for an external Agent. The user talks naturally; the Agent reads context, decides whether to discuss or write, and keeps the workspace clean.
 
@@ -57,6 +57,7 @@ uv run python -m app.agent_tools export
 - Changed project judgement: add `project_updates`.
 - Renamed project: add `project_renames`.
 - Changed project constraint: add `project_constraint_updates`.
+- Changed long-term project memory: add `project_memory_updates`.
 - New project: use `project_creations` only after explicit user confirmation.
 - Stop a project: prefer `project_deletions` with `mode: "archive"`.
 - Framework friction: optionally record feedback in `.agent-workspace/usage/usage.jsonl`; do not patch tracked files unless asked.
@@ -82,6 +83,38 @@ Action intent:
 - Use `project_updates` only when the current project judgement changes.
 - Use `project_renames` for project name changes; do not maintain the database directly.
 - Use `project_constraint_updates` for scope or anti-expansion constraint changes.
+- Use `project_memory_updates` when long-term project understanding changes.
+
+## Project Memory
+
+Project Memory is the compressed long-term layer for restoring project context. It includes:
+
+- `origin`
+- `current_goal`
+- `progress_percent`
+- `progress_note`
+- `key_judgements`
+- `validated_facts`
+- `open_questions`
+- `discussion_brief`
+
+Use `project_memory_updates` when:
+
+- A new project needs initial memory after creation.
+- A project is merged, renamed, or enters a new stage.
+- The user explicitly asks for a project summary.
+- A key judgement is formed.
+- The event stream has grown and should be compressed into durable memory.
+- Future project discussion needs clearer background.
+
+Do not use `project_memory_updates` for:
+
+- Ordinary daily progress.
+- One-off ideas.
+- Facts that are not yet confirmed.
+- Mechanical updates on every apply.
+
+Discussion mode should first read memory fields, especially `origin`, `current_goal`, `key_judgements`, `validated_facts`, `open_questions`, `discussion_brief`, plus `recent_events`, `risk_note`, and `project_constraint`. Discussion is read-only by default unless the user explicitly asks to record or confirms a write. This version only provides the context structure; it does not add a separate discussion skill or chat UI.
 
 4. If writing, create a temporary JSON payload under `.agent-workspace/apply/`.
 

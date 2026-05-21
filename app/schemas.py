@@ -1,5 +1,6 @@
 """Pydantic 模型：LLM/Agent 响应校验。"""
 
+import json
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
@@ -59,6 +60,19 @@ class ProjectConstraintUpdate(BaseModel):
     reason: str | None = None
 
 
+class ProjectMemoryUpdate(BaseModel):
+    project_name: str
+    origin: str | None = None
+    current_goal: str | None = None
+    progress_percent: int | None = Field(default=None, ge=0, le=100)
+    progress_note: str | None = None
+    key_judgements: list[str] | None = None
+    validated_facts: list[str] | None = None
+    open_questions: list[str] | None = None
+    discussion_brief: str | None = None
+    reason: str | None = None
+
+
 class ProjectCreation(BaseModel):
     project_name: str
     status: Status = "observe"
@@ -111,6 +125,7 @@ class ControlResponse(BaseModel):
     project_renames: list[ProjectRename] = Field(default_factory=list)
     project_updates: list[ProjectUpdate] = Field(default_factory=list)
     project_constraint_updates: list[ProjectConstraintUpdate] = Field(default_factory=list)
+    project_memory_updates: list[ProjectMemoryUpdate] = Field(default_factory=list)
     project_events: list[ProjectEventInput] = Field(default_factory=list)
     project_deletions: list[ProjectDeletion] = Field(default_factory=list)
     system_judgement: SystemJudgement
@@ -124,6 +139,7 @@ class ControlResponse(BaseModel):
         "project_creations",
         "project_renames",
         "project_constraint_updates",
+        "project_memory_updates",
         "project_events",
         "project_deletions",
         mode="before",
@@ -139,11 +155,25 @@ def row_to_project_dict(row) -> dict:
 
     d = dict(row)
     d["constraint"] = d.pop("project_constraint", "")
+    for field in ("key_judgements", "validated_facts", "open_questions"):
+        d[field] = _parse_string_list(d.get(field))
     if d.get("updated_at"):
         d["updated_at"] = format_display(d["updated_at"], with_seconds=False)
     if d.get("created_at"):
         d["created_at"] = format_display(d["created_at"], with_seconds=False)
     return d
+
+
+def _parse_string_list(raw) -> list[str]:
+    if not raw:
+        return []
+    try:
+        parsed = json.loads(raw)
+    except (TypeError, json.JSONDecodeError):
+        return []
+    if not isinstance(parsed, list):
+        return []
+    return [str(item) for item in parsed if isinstance(item, str)]
 
 
 def row_to_event_dict(row) -> dict:

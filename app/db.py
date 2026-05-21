@@ -3,7 +3,12 @@
 import sqlite3
 from pathlib import Path
 
-from app.models import CREATE_LOGS_TABLE, CREATE_PROJECT_EVENTS_TABLE, CREATE_PROJECTS_TABLE
+from app.models import (
+    CREATE_LOGS_TABLE,
+    CREATE_PROJECT_EVENTS_TABLE,
+    CREATE_PROJECTS_TABLE,
+    PROJECT_MEMORY_COLUMNS,
+)
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT_DIR / "data"
@@ -20,6 +25,16 @@ def get_connection() -> sqlite3.Connection:
     return conn
 
 
+def migrate_projects_table(conn: sqlite3.Connection) -> None:
+    existing = {
+        row["name"]
+        for row in conn.execute("PRAGMA table_info(projects)").fetchall()
+    }
+    for column, ddl in PROJECT_MEMORY_COLUMNS.items():
+        if column not in existing:
+            conn.execute(f"ALTER TABLE projects ADD COLUMN {column} {ddl}")
+
+
 def init_db(conn: sqlite3.Connection | None = None) -> None:
     close = False
     if conn is None:
@@ -29,6 +44,7 @@ def init_db(conn: sqlite3.Connection | None = None) -> None:
         conn.executescript(
             CREATE_PROJECTS_TABLE + CREATE_LOGS_TABLE + CREATE_PROJECT_EVENTS_TABLE
         )
+        migrate_projects_table(conn)
         conn.commit()
     finally:
         if close:

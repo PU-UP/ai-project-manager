@@ -40,6 +40,7 @@ GET http://127.0.0.1:8000/api/context
   - `project_renames`
   - `project_updates`
   - `project_constraint_updates`
+  - `project_memory_updates`
   - `project_events`
   - `project_deletions`
   - `system_judgement`
@@ -47,10 +48,46 @@ GET http://127.0.0.1:8000/api/context
 - 普通进展、反馈、想法、风险和决策优先写入 `project_events`。
 - 只有项目当前判断发生变化时才写入 `project_updates`。
 - 项目改名写入 `project_renames`；项目约束变化写入 `project_constraint_updates`。
+- 项目长期记忆变化写入 `project_memory_updates`，不要用它替代普通事件记录。
 - 默认归档，不默认彻底删除。
 - 遵守各项目 `constraint`。
 - `status` 使用固定五类：`active` 当前推进、`maintain` 维持运行、`observe` 观察孵化、`paused` 短期暂停、`archived` 历史归档。
 - `control_action` 必须使用系统 prompt 中的固定枚举，不要自定义动作词；`control_action_note` 控制在 80 个汉字以内。
+
+## Project Memory
+
+项目长期记忆由以下字段组成：
+
+- `origin`
+- `current_goal`
+- `progress_percent`
+- `progress_note`
+- `key_judgements`
+- `validated_facts`
+- `open_questions`
+- `discussion_brief`
+
+适合使用 `project_memory_updates` 的情况：
+
+- 项目刚创建后需要形成初始记忆。
+- 项目合并、重命名或阶段变化后。
+- 用户明确要求总结项目。
+- 形成了关键判断。
+- 事件流累积后需要压缩为长期记忆。
+- 为后续项目讨论补充背景。
+
+不要使用 `project_memory_updates` 的情况：
+
+- 普通日常进展。
+- 一次性想法。
+- 尚未确认的事实。
+- 每次 apply 都机械更新。
+
+Discussion Mode 前置规则：
+
+- 项目讨论模式默认先读取项目 memory 字段，尤其是 `origin`、`current_goal`、`key_judgements`、`validated_facts`、`open_questions`、`discussion_brief`、`recent_events`、`risk_note`、`project_constraint`。
+- 讨论模式默认不写入数据库，除非用户明确要求记录或确认写入。
+- 本仓库目前只提供上下文结构，不实现独立聊天 UI 或 discussion skill。
 
 ## 4. 提交更新
 

@@ -146,7 +146,19 @@ async def api_events(limit: int = 30):
 async def api_apply(request: Request):
     body = await request.json()
     user_input = body.get("user_input", "[external-agent]")
-    if "project_updates" in body:
+    if any(
+        key in body
+        for key in (
+            "project_creations",
+            "project_renames",
+            "project_updates",
+            "project_constraint_updates",
+            "project_memory_updates",
+            "project_events",
+            "project_deletions",
+            "system_judgement",
+        )
+    ):
         raw = json.dumps(body, ensure_ascii=False)
     else:
         raw = body.get("raw") or body.get("json") or ""

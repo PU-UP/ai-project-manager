@@ -10,20 +10,10 @@
       <span class="brand-mark" aria-hidden="true"></span>
       <div>
         <h1>AI项目管家</h1>
-        <p class="hero-sub">Agent 项目经理运行时 · 项目记忆 · 控制判断</p>
+        <p class="hero-sub">项目总览 · 近期记录 · 下一步方向</p>
       </div>
     </div>
-    <p class="hero-hint">用户自然语言描述，外部 Agent 负责读取、判断、写入、维护；本页展示当前局面</p>
-  </div>
-  <div class="mission-strip">
-    <div>
-      <span class="mission-label">当前定位</span>
-      <p>这是给外部 Agent 使用的个人项目经理工程框架，不是内置聊天机器人，也不是手动项目表。</p>
-    </div>
-    <div>
-      <span class="mission-label">Agent 能力</span>
-      <p>读取项目上下文、追加事件、更新判断、创建/归档项目，并把近期方向可视化。</p>
-    </div>
+    <p class="hero-hint">快速看到最近在推进什么、哪里需要介入、下一步该收敛到哪里。</p>
   </div>
   <div class="stats-row">
     <div class="stat-chip">
@@ -59,7 +49,7 @@
 
 <section class="card card--judgement">
   <div class="card-head">
-    <h2>系统判断</h2>
+    <h2>当前判断</h2>
     {% if judgement.summary %}<span class="card-badge">最新</span>{% endif %}
   </div>
 
@@ -101,8 +91,8 @@
   {% endif %}
   {% else %}
   <div class="empty-state">
-    <p>尚无系统判断</p>
-    <span>通过 Agent 更新项目进度后刷新本页</span>
+    <p>暂无判断</p>
+    <span>有新的项目输入后，这里会给出整体方向。</span>
   </div>
   {% endif %}
 </section>
@@ -110,7 +100,7 @@
 <section class="card card--timeline">
   <div class="card-head">
     <h2>近期项目记录</h2>
-    <span class="card-meta">Agent 追加的事件流</span>
+    <span class="card-meta">最近动态</span>
   </div>
 
   {% if recent_events %}
@@ -138,15 +128,15 @@
   {% else %}
   <div class="empty-state">
     <p>暂无近期记录</p>
-    <span>让 Agent 在更新项目时追加 project_events，页面会形成进展时间线</span>
+    <span>新的项目进展会显示在这里。</span>
   </div>
   {% endif %}
 </section>
 
 <section class="card card--projects card--table">
   <div class="card-head">
-    <h2>项目进度</h2>
-    <span class="card-meta">{{ stats.total }} 个项目 · 横向对比</span>
+    <h2>项目总览</h2>
+    <span class="card-meta">{{ stats.total }} 个项目</span>
   </div>
 
   <div class="table-wrap">

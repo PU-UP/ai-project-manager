@@ -31,11 +31,21 @@ def append_episode(
     try:
         result = result or {}
         created = result.get("created", [])
+        renamed = result.get("renamed", [])
         updated = result.get("updated", [])
+        constraint_updated = result.get("constraint_updated", [])
         archived = result.get("archived", [])
         deleted = result.get("deleted", [])
         events = result.get("events", [])
-        changed_projects = _unique(created + updated + archived + deleted + events)
+        changed_projects = _unique(
+            created
+            + renamed
+            + updated
+            + constraint_updated
+            + archived
+            + deleted
+            + events
+        )
         created_at = now_beijing()
 
         entry = {
@@ -52,7 +62,9 @@ def append_episode(
             ),
             "changed_projects": changed_projects,
             "created": created,
+            "renamed": renamed,
             "updated": updated,
+            "constraint_updated": constraint_updated,
             "archived": archived,
             "deleted": deleted,
             "events": events,

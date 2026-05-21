@@ -1,6 +1,6 @@
 [project]
 name = "ai-project-manager"
-version = "0.3.0"
+version = "0.4.0"
 description = "AI项目管家 - 给外部 Agent 使用的个人项目经理工程框架"
 readme = "README.md"
 requires-python = ">=3.11"

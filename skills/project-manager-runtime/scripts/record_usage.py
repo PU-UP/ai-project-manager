@@ -9,9 +9,30 @@ from pathlib import Path
 import tomllib
 
 
-SKILL_VERSION = "0.3.0"
+SKILL_VERSION = "0.4.0"
 ROOT_DIR = Path(__file__).resolve().parents[3]
 USAGE_PATH = ROOT_DIR / ".agent-workspace" / "usage" / "usage.jsonl"
+FRICTION_TYPES = (
+    "context_missing",
+    "prompt_ambiguous",
+    "schema_gap",
+    "workflow_repetitive",
+    "ui_gap",
+    "safety_gate_needed",
+    "other",
+)
+SEVERITIES = ("low", "medium", "high")
+UPGRADE_TARGETS = (
+    "skill",
+    "prompt",
+    "schema",
+    "cli",
+    "api",
+    "ui",
+    "logging",
+    "docs",
+    "other",
+)
 
 
 def app_version() -> str:
@@ -38,6 +59,21 @@ def main() -> int:
         help="Where this use wrote data",
     )
     parser.add_argument("--feedback", default="", help="Optional low-frequency improvement note")
+    parser.add_argument(
+        "--friction-type",
+        choices=FRICTION_TYPES,
+        help="Optional category for the friction that may drive a future upgrade",
+    )
+    parser.add_argument(
+        "--severity",
+        choices=SEVERITIES,
+        help="Optional severity for the friction note",
+    )
+    parser.add_argument(
+        "--upgrade-target",
+        choices=UPGRADE_TARGETS,
+        help="Optional framework area that should be considered for upgrade",
+    )
     args = parser.parse_args()
 
     USAGE_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -52,6 +88,12 @@ def main() -> int:
     }
     if args.feedback:
         record["feedback"] = args.feedback
+    if args.friction_type:
+        record["friction_type"] = args.friction_type
+    if args.severity:
+        record["severity"] = args.severity
+    if args.upgrade_target:
+        record["upgrade_target"] = args.upgrade_target
 
     with USAGE_PATH.open("a", encoding="utf-8") as f:
         f.write(json.dumps(record, ensure_ascii=False) + "\n")

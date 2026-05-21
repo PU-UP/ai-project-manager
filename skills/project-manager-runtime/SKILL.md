@@ -5,7 +5,7 @@ description: Use this repository as an external-Agent personal project manager r
 
 # Project Manager Runtime
 
-Skill version: `0.3.0`
+Skill version: `0.4.0`
 
 Use this skill to operate the repository as a project-manager runtime for an external Agent. The user talks naturally; the Agent reads context, decides whether to discuss or write, and keeps the workspace clean.
 
@@ -20,7 +20,9 @@ If normal use requires changing tracked files, say that the framework needs an u
 - Runtime version source: `pyproject.toml` field `project.version`.
 - Skill version source: this `SKILL.md`.
 - Usage record path: `.agent-workspace/usage/usage.jsonl`.
+- Mini episode path: `.agent-workspace/episodes/YYYY-MM-DD.jsonl`.
 - Record meaningful uses only: applying updates, making a project-direction judgement, or noticing framework friction. Do not record every quick read.
+- Each apply automatically writes one mini episode for lightweight review. Daily quick reads do not generate episodes.
 
 Use the bundled script for records:
 
@@ -29,6 +31,14 @@ uv run python skills/project-manager-runtime/scripts/record_usage.py --action ap
 ```
 
 Accepted `--write-mode`: `none`, `database`, `workspace`, `framework`.
+
+For framework friction, optionally add structured fields:
+
+- `--friction-type`: `context_missing`, `prompt_ambiguous`, `schema_gap`, `workflow_repetitive`, `ui_gap`, `safety_gate_needed`, `other`.
+- `--severity`: `low`, `medium`, `high`.
+- `--upgrade-target`: `skill`, `prompt`, `schema`, `cli`, `api`, `ui`, `logging`, `docs`, `other`.
+
+These fields help future maintenance aggregate feedback into small skill, prompt, schema, CLI/API, UI, logging, or docs upgrades.
 
 ## Workflow
 
@@ -109,4 +119,10 @@ Keep feedback rare and summary-level. Use `--feedback` when the framework or ski
 uv run python skills/project-manager-runtime/scripts/record_usage.py --action feedback --write-mode workspace --summary "Discussed project priorities without database writes" --feedback "The context export does not show enough recent-event grouping by project."
 ```
 
-Future maintenance can inspect `.agent-workspace/usage/usage.jsonl` to decide whether the framework or skill should be upgraded.
+When the friction has a clear shape, include `--friction-type`, `--severity`, and `--upgrade-target` so future system-upgrade work can group similar issues without reading every note manually:
+
+```bash
+uv run python skills/project-manager-runtime/scripts/record_usage.py --action feedback --write-mode workspace --summary "Context grouping was insufficient" --feedback "Recent events are not grouped by project." --friction-type context_missing --severity medium --upgrade-target prompt
+```
+
+Future maintenance can inspect `.agent-workspace/usage/usage.jsonl` to decide whether the framework or skill should be upgraded. Apply calls also write compact mini episodes to `.agent-workspace/episodes/YYYY-MM-DD.jsonl`; these are for lightweight replay and upgrade review, not full tracing.

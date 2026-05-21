@@ -5,6 +5,7 @@ import json
 from app.db import get_connection, init_db
 from app.schemas import ControlResponse
 from app.services.control_parser import parse_control_response
+from app.services.episode_log import append_episode
 from app.services.interaction_log import append_jsonl, save_log
 from app.services.project_updater import apply_updates, updates_summary
 from app.version import get_app_version
@@ -55,6 +56,13 @@ def apply_raw_json(
     if err or not parsed:
         save_log(user_input, raw, None, source=source)
         append_jsonl(user_input, raw, None, [], source=source)
+        append_episode(
+            user_input=user_input,
+            raw_output=raw,
+            source=source,
+            ok=False,
+            error=err or "解析失败",
+        )
         return {
             "ok": False,
             "error": err or "解析失败",
@@ -81,6 +89,15 @@ def apply_raw_json(
         )
     )
     append_jsonl(user_input, raw, parsed, changed_projects, source=source)
+    append_episode(
+        user_input=user_input,
+        raw_output=raw,
+        source=source,
+        ok=True,
+        error=None,
+        parsed=parsed,
+        result=result,
+    )
 
     return {
         "ok": True,

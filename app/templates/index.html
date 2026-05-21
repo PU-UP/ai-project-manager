@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% from "macros.html" import level_bar, tag_status, tag_risk, tag_action %}
+
+{% block title %}AI项目管家{% endblock %}
+
+{% block body %}
+<header class="hero">
+  <div class="hero-top">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      <div>
+        <h1>AI项目管家</h1>
+        <p class="hero-sub">Agent 项目经理运行时 · 项目记忆 · 控制判断</p>
+      </div>
+    </div>
+    <p class="hero-hint">用户自然语言描述，外部 Agent 负责读取、判断、写入、维护；本页展示当前局面</p>
+  </div>
+  <div class="mission-strip">
+    <div>
+      <span class="mission-label">当前定位</span>
+      <p>这是给外部 Agent 使用的个人项目经理工程框架，不是内置聊天机器人，也不是手动项目表。</p>
+    </div>
+    <div>
+      <span class="mission-label">Agent 能力</span>
+      <p>读取项目上下文、追加事件、更新判断、创建/归档项目，并把近期方向可视化。</p>
+    </div>
+  </div>
+  <div class="stats-row">
+    <div class="stat-chip">
+      <span class="stat-num">{{ stats.total }}</span>
+      <span class="stat-label">项目</span>
+    </div>
+    <div class="stat-chip stat-chip--active">
+      <span class="stat-num">{{ stats.active }}</span>
+      <span class="stat-label">推进中</span>
+    </div>
+    <div class="stat-chip stat-chip--warn">
+      <span class="stat-num">{{ stats.high_risk }}</span>
+      <span class="stat-label">高风险</span>
+    </div>
+    <div class="stat-chip stat-chip--human">
+      <span class="stat-num">{{ stats.need_human }}</span>
+      <span class="stat-label">需介入</span>
+    </div>
+  </div>
+</header>
+
+{% if flash %}
+<section class="toast toast--{{ flash.result }}">
+  {% if flash.message %}<p class="toast-msg">{{ flash.message }}</p>{% endif %}
+  {% if flash.updated %}
+  <p class="toast-meta">已更新：{{ flash.updated | join('、') }}</p>
+  {% endif %}
+  {% if flash.skipped %}
+  <p class="toast-meta">未匹配：{{ flash.skipped | join('、') }}</p>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="card card--judgement">
+  <div class="card-head">
+    <h2>系统判断</h2>
+    {% if judgement.summary %}<span class="card-badge">最新</span>{% endif %}
+  </div>
+
+  {% if judgement.summary %}
+  <blockquote class="judgement-lead">{{ judgement.summary }}</blockquote>
+
+  <div class="insight-grid">
+    <div class="insight insight--positive">
+      <h3>真推进</h3>
+      <ul>{% for x in judgement.real_progress %}<li>{{ x }}</li>{% else %}<li class="empty">暂无</li>{% endfor %}</ul>
+    </div>
+    <div class="insight insight--warning">
+      <h3>假性推进风险</h3>
+      <ul>{% for x in judgement.pseudo_progress_risk %}<li>{{ x }}</li>{% else %}<li class="empty">暂无</li>{% endfor %}</ul>
+    </div>
+    <div class="insight insight--ai">
+      <h3>可交给 AI</h3>
+      <ul>{% for x in judgement.delegate_to_ai %}<li>{{ x }}</li>{% else %}<li class="empty">暂无</li>{% endfor %}</ul>
+    </div>
+    <div class="insight insight--human">
+      <h3>需我亲自介入</h3>
+      <ul>{% for x in judgement.need_human_intervention %}<li>{{ x }}</li>{% else %}<li class="empty">暂无</li>{% endfor %}</ul>
+    </div>
+    <div class="insight insight--muted">
+      <h3>建议暂停或忽略</h3>
+      <ul>{% for x in judgement.pause_or_ignore %}<li>{{ x }}</li>{% else %}<li class="empty">暂无</li>{% endfor %}</ul>
+    </div>
+  </div>
+
+  {% if judgement.top_control_recommendation %}
+  <div class="priority-callout">
+    <span class="priority-label">首要建议</span>
+    <p>
+      <strong>{{ judgement.top_control_recommendation.project_name }}</strong>
+      <span class="priority-action">{{ action_label(judgement.top_control_recommendation.control_action) }}</span>
+      — {{ judgement.top_control_recommendation.note }}
+    </p>
+  </div>
+  {% endif %}
+  {% else %}
+  <div class="empty-state">
+    <p>尚无系统判断</p>
+    <span>通过 Agent 更新项目进度后刷新本页</span>
+  </div>
+  {% endif %}
+</section>
+
+<section class="card card--timeline">
+  <div class="card-head">
+    <h2>近期项目记录</h2>
+    <span class="card-meta">Agent 追加的事件流</span>
+  </div>
+
+  {% if recent_events %}
+  <div class="timeline">
+    {% for e in recent_events %}
+    <article class="timeline-item timeline-item--{{ e.event_type }}">
+      <div class="timeline-marker"></div>
+      <div class="timeline-main">
+        <div class="timeline-top">
+          <span class="timeline-project">{{ e.project_name }}</span>
+          <span class="timeline-type">{{ event_label(e.event_type) }}</span>
+          <time>{{ e.happened_at or e.created_at }}</time>
+        </div>
+        <p>{{ e.summary }}</p>
+        {% if e.decision or e.next_action %}
+        <div class="timeline-meta">
+          {% if e.decision %}<span>判断：{{ e.decision }}</span>{% endif %}
+          {% if e.next_action %}<span>下一步：{{ e.next_action }}</span>{% endif %}
+        </div>
+        {% endif %}
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <p>暂无近期记录</p>
+    <span>让 Agent 在更新项目时追加 project_events，页面会形成进展时间线</span>
+  </div>
+  {% endif %}
+</section>
+
+<section class="card card--projects card--table">
+  <div class="card-head">
+    <h2>项目进度</h2>
+    <span class="card-meta">{{ stats.total }} 个项目 · 横向对比</span>
+  </div>
+
+  <div class="table-wrap">
+    <table class="project-table">
+      <thead>
+        <tr>
+          <th class="col-name">项目</th>
+          <th class="col-status">状态</th>
+          <th class="col-score" title="主观价值 1-5">价值</th>
+          <th class="col-risk">风险</th>
+          <th class="col-score" title="AI 接管 0-5">AI</th>
+          <th class="col-score col-score--human" title="人工介入 0-5">介入</th>
+          <th class="col-action">动作</th>
+          <th class="col-note">说明</th>
+          <th class="col-time">更新</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in projects %}
+        <tr class="project-tr project-tr--{{ p.status }}">
+          <td class="col-name">
+            <a href="/project/{{ p.id }}" class="table-project-link">{{ p.name }}</a>
+          </td>
+          <td class="col-status">{{ tag_status(p.status) }}</td>
+          <td class="col-score">{{ level_bar(p.value_score, compact=true) }}</td>
+          <td class="col-risk">{{ tag_risk(p.risk_level) }}</td>
+          <td class="col-score">{{ level_bar(p.ai_delegation_level, compact=true) }}</td>
+          <td class="col-score col-score--human">{{ level_bar(p.human_intervention_level, compact=true) }}</td>
+          <td class="col-action">{{ tag_action(p.control_action) }}</td>
+          <td class="col-note" title="{{ p.control_action_note }}">{{ p.control_action_note }}</td>
+          <td class="col-time"><time>{{ p.updated_at or '—' }}</time></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

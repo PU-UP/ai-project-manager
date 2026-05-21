@@ -1,0 +1,26 @@
+[project]
+name = "ai-project-manager"
+version = "0.1.0"
+description = "AI项目管家 - 给外部 Agent 使用的个人项目经理工程框架"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.32.0",
+    "jinja2>=3.1.4",
+    "python-multipart>=0.0.12",
+    "httpx>=0.27.0",
+    "python-dotenv>=1.0.1",
+    "pydantic>=2.9.0",
+]
+
+[project.scripts]
+apm-export = "app.agent_tools:main_export"
+apm-apply = "app.agent_tools:main_apply"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]

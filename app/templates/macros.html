@@ -1,0 +1,20 @@
+{% macro level_bar(value, max=5, compact=false) %}
+<span class="level-bar{% if compact %} level-bar--compact{% endif %}" title="{{ value }}/{{ max }}">
+  {% for i in range(max) %}
+  <span class="level-seg{% if i < value %} is-on{% endif %}"></span>
+  {% endfor %}
+  {% if compact %}<span class="level-num">{{ value }}</span>{% endif %}
+</span>
+{% endmacro %}
+
+{% macro tag_status(status) %}
+<span class="tag tag-status tag-status-{{ status }}">{{ status_label(status) }}</span>
+{% endmacro %}
+
+{% macro tag_risk(level) %}
+<span class="tag tag-risk tag-risk-{{ level }}">{{ risk_label(level) }}</span>
+{% endmacro %}
+
+{% macro tag_action(action) %}
+<span class="tag tag-action">{{ action_label(action) }}</span>
+{% endmacro %}

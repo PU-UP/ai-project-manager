@@ -1,0 +1,76 @@
+# Agent 操作指南
+
+本仓库是给 **Cursor / Codex / Claude Code 等外部 Agent** 使用的个人项目经理工程框架。它不是内置 Agent 的 App，也不是让用户手动填表的系统。
+
+用户只需要自然语言描述项目进展、思考、困惑或决策；Agent 负责读取上下文、判断影响、写入项目状态和事件记录。网页只负责展示当前项目局面。
+
+## 1. 导出当前项目上下文
+
+```bash
+uv run python -m app.agent_tools export
+```
+
+或（服务已启动）：
+
+```http
+GET http://127.0.0.1:8000/api/context
+```
+
+上下文包含：
+
+- 当前项目状态
+- 近期项目事件
+- 最新系统级判断
+- 可用 Agent 操作协议
+
+## 2. 阅读系统 Prompt
+
+文件：`app/prompts/project_control_panel.md`
+
+它定义了项目经理判断规则、输出 JSON 结构、项目创建/更新/事件/归档策略。
+
+## 3. 根据用户自然语言产出 JSON
+
+- **仅输出严格 JSON**，无 markdown、无解释文字。
+- 顶层结构支持：
+  - `project_creations`
+  - `project_updates`
+  - `project_events`
+  - `project_deletions`
+  - `system_judgement`
+- 未知项目不要自动创建；只有用户明确确认时才写入 `project_creations`。
+- 普通进展、反馈、想法、风险和决策优先写入 `project_events`。
+- 只有项目当前判断发生变化时才写入 `project_updates`。
+- 默认归档，不默认彻底删除。
+- 遵守各项目 `constraint`。
+
+## 4. 提交更新
+
+```bash
+uv run python -m app.agent_tools apply -f response.json
+```
+
+或：
+
+```http
+POST http://127.0.0.1:8000/api/apply
+Content-Type: application/json
+
+{
+  "user_input": "用户原话…",
+  "project_updates": [],
+  "project_events": [],
+  "system_judgement": {}
+}
+```
+
+## 5. 辅助读取接口
+
+```http
+GET http://127.0.0.1:8000/api/projects
+GET http://127.0.0.1:8000/api/events?limit=30
+```
+
+## 6. 告知用户刷新页面
+
+首页会展示更新后的系统判断、近期项目记录和项目进度表。详情页会展示单个项目的控制动作、风险、约束和事件记录。

@@ -1,0 +1,39 @@
+# Environment
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+env/
+.uv/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Build artifacts
+dist/
+build/
+
+# Local runtime data
+data/*
+!data/.gitkeep
+logs/*
+!logs/.gitkeep
+
+# Editor and OS files
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

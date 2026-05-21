@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}AI项目管家{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="page-bg" aria-hidden="true"></div>
+  <div class="layout">
+    {% block body %}{% endblock %}
+    <footer class="site-footer">
+      <span>个人项目进度控制面板</span>
+      <span class="footer-dot">·</span>
+      <span class="footer-muted">非 Todo / Notion / Dashboard</span>
+    </footer>
+  </div>
+</body>
+</html>

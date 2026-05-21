@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% from "macros.html" import level_bar, tag_status, tag_risk, tag_action %}
+
+{% block title %}{{ project.name }} — AI项目管家{% endblock %}
+
+{% block body %}
+<header class="hero hero--compact">
+  <a href="/" class="back-btn">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <path d="M10 12L6 8l4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    返回总览
+  </a>
+  <h1 class="detail-title">{{ project.name }}</h1>
+  <div class="detail-tags">
+    {{ tag_status(project.status) }}
+    {{ tag_risk(project.risk_level) }}
+    {{ tag_action(project.control_action) }}
+  </div>
+</header>
+
+<section class="detail-grid">
+  <div class="detail-card detail-card--highlight">
+    <h2>控制动作</h2>
+    <p class="detail-action-note">{{ project.control_action_note }}</p>
+  </div>
+
+  <div class="detail-card">
+    <h2>维度评分</h2>
+    <dl class="metric-list">
+      <div class="metric-row">
+        <dt>价值</dt>
+        <dd>{{ level_bar(project.value_score) }}<span class="metric-val">{{ project.value_score }}/5</span></dd>
+      </div>
+      <div class="metric-row">
+        <dt>AI 接管</dt>
+        <dd>{{ level_bar(project.ai_delegation_level) }}<span class="metric-val">{{ project.ai_delegation_level }}/5</span></dd>
+      </div>
+      <div class="metric-row metric-row--human">
+        <dt>人工介入</dt>
+        <dd>{{ level_bar(project.human_intervention_level) }}<span class="metric-val">{{ project.human_intervention_level }}/5</span></dd>
+      </div>
+    </dl>
+  </div>
+
+  <div class="detail-card detail-card--wide">
+    <h2>当前风险</h2>
+    <p>{{ project.risk_note }}</p>
+  </div>
+
+  <div class="detail-card detail-card--wide">
+    <h2>最近进展</h2>
+    <p>{{ project.latest_update }}</p>
+  </div>
+
+  <div class="detail-card detail-card--wide detail-card--constraint">
+    <h2>项目约束</h2>
+    <p>{{ project.constraint }}</p>
+  </div>
+
+  <div class="detail-card detail-card--wide">
+    <h2>项目记录</h2>
+    {% if events %}
+    <div class="timeline timeline--detail">
+      {% for e in events %}
+      <article class="timeline-item timeline-item--{{ e.event_type }}">
+        <div class="timeline-marker"></div>
+        <div class="timeline-main">
+          <div class="timeline-top">
+            <span class="timeline-type">{{ event_label(e.event_type) }}</span>
+            <time>{{ e.happened_at or e.created_at }}</time>
+          </div>
+          <p>{{ e.summary }}</p>
+          {% if e.evidence or e.decision or e.next_action %}
+          <div class="timeline-meta">
+            {% if e.evidence %}<span>依据：{{ e.evidence }}</span>{% endif %}
+            {% if e.decision %}<span>判断：{{ e.decision }}</span>{% endif %}
+            {% if e.next_action %}<span>下一步：{{ e.next_action }}</span>{% endif %}
+          </div>
+          {% endif %}
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="empty-inline">暂无事件记录。</p>
+    {% endif %}
+  </div>
+
+  <div class="detail-card detail-card--meta">
+    <span class="meta-label">更新时间</span>
+    <span class="meta-value">{{ project.updated_at or '—' }}</span>
+  </div>
+</section>
+{% endblock %}

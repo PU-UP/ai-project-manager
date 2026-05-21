@@ -46,6 +46,8 @@ GET http://127.0.0.1:8000/api/context
 - 只有项目当前判断发生变化时才写入 `project_updates`。
 - 默认归档，不默认彻底删除。
 - 遵守各项目 `constraint`。
+- `status` 使用固定五类：`active` 当前推进、`maintain` 维持运行、`observe` 观察孵化、`paused` 短期暂停、`archived` 历史归档。
+- `control_action` 必须使用系统 prompt 中的固定枚举，不要自定义动作词；`control_action_note` 控制在 80 个汉字以内。
 
 ## 4. 提交更新
 

@@ -59,7 +59,7 @@ async def index(request: Request):
     conn = get_connection()
     try:
         projects = list_projects(conn)
-        recent_events = list_recent_events(conn, limit=12)
+        recent_events = list_recent_events(conn, limit=100)
         judgement = get_latest_judgement(conn)
     finally:
         conn.close()

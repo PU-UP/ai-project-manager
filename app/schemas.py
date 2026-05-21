@@ -42,8 +42,8 @@ class ProjectUpdate(BaseModel):
     ai_delegation_level: int | None = Field(default=None, ge=0, le=5)
     human_intervention_level: int | None = Field(default=None, ge=0, le=5)
     control_action: ControlAction | None = None
-    control_action_note: str | None = None
-    latest_update: str | None = None
+    control_action_note: str | None = Field(default=None, max_length=80)
+    latest_update: str | None = Field(default=None, max_length=200)
     reason: str | None = None
 
 
@@ -56,8 +56,8 @@ class ProjectCreation(BaseModel):
     ai_delegation_level: int = Field(default=3, ge=0, le=5)
     human_intervention_level: int = Field(default=3, ge=0, le=5)
     control_action: ControlAction = "observe"
-    control_action_note: str = "先记录并观察，不急于扩展范围"
-    latest_update: str = "由 Agent 根据用户确认创建"
+    control_action_note: str = Field(default="先记录并观察，不急于扩展范围", max_length=80)
+    latest_update: str = Field(default="由 Agent 根据用户确认创建", max_length=200)
     project_constraint: str = "先验证真实需求和下一步控制动作，再扩展系统能力"
     reason: str | None = None
 

@@ -1,11 +1,11 @@
 """界面展示用中文标签。"""
 
 STATUS_LABELS = {
-    "active": "推进中",
-    "maintain": "维持",
-    "observe": "观察",
-    "paused": "暂停",
-    "archived": "归档",
+    "active": "当前推进",
+    "maintain": "维持运行",
+    "observe": "观察孵化",
+    "paused": "短期暂停",
+    "archived": "历史归档",
 }
 
 RISK_LABELS = {
@@ -15,15 +15,15 @@ RISK_LABELS = {
 }
 
 ACTION_LABELS = {
-    "continue": "继续推进",
-    "maintain": "低成本维持",
-    "observe": "继续观察",
+    "continue": "继续",
+    "maintain": "维持",
+    "observe": "观察",
     "pause": "暂停",
-    "delegate_to_ai": "交给 AI",
-    "human_intervene": "亲自介入",
-    "seek_feedback": "寻求反馈",
-    "narrow_scope": "缩小范围",
-    "change_metric": "调整标准",
+    "delegate_to_ai": "AI执行",
+    "human_intervene": "人工介入",
+    "seek_feedback": "找反馈",
+    "narrow_scope": "收窄",
+    "change_metric": "调标准",
     "archive": "归档",
 }
 

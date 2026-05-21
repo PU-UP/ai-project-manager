@@ -180,10 +180,12 @@ POST /api/apply
 | ai_delegation_level | 0-5 |
 | human_intervention_level | 0-5 |
 | control_action | 控制动作枚举 |
-| control_action_note | 动作说明 |
+| control_action_note | 动作说明，控制在 80 个汉字以内 |
 | latest_update | 最近进展 |
 | project_constraint | 项目约束 |
 | created_at, updated_at | 时间戳 |
+
+状态含义：`active` 当前推进，`maintain` 维持运行，`observe` 观察孵化，`paused` 短期暂停，`archived` 历史归档。控制动作使用系统 prompt 中的固定枚举，不由 Agent 自定义。
 
 ### `project_events`
 

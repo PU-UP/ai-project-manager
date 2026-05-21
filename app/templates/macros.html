@@ -8,7 +8,7 @@
 {% endmacro %}
 
 {% macro tag_status(status) %}
-<span class="tag tag-status tag-status-{{ status }}">{{ status_label(status) }}</span>
+<span class="tag tag-status tag-status-{{ status }}" data-status-value="{{ status }}">{{ status_label(status) }}</span>
 {% endmacro %}
 
 {% macro tag_risk(level) %}
@@ -16,5 +16,5 @@
 {% endmacro %}
 
 {% macro tag_action(action) %}
-<span class="tag tag-action">{{ action_label(action) }}</span>
+<span class="tag tag-action" data-action-value="{{ action }}">{{ action_label(action) }}</span>
 {% endmacro %}

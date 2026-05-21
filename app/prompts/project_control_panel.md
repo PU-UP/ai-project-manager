@@ -53,6 +53,16 @@
 - human_intervention_level: 0-5
 - control_action: continue | maintain | observe | pause | delegate_to_ai | human_intervene | seek_feedback | narrow_scope | change_metric | archive
 
+状态与动作含义：
+
+- active 表示当前应该投入精力推进。
+- maintain 表示已经相对稳定运行，只需低成本保证不断线。
+- observe 表示值得继续思考或验证，但暂时不制造执行压力。
+- paused 表示短期搁置，之后可以恢复。
+- archived 表示历史归档，不再进入当前项目池。
+- control_action 必须使用上面的固定枚举，不要自定义动作词。
+- control_action_note 应控制在 80 个汉字以内；更长背景写入 latest_update 或 project_events。
+
 ## 输出 JSON 格式
 
 必须且仅输出如下结构的 JSON：

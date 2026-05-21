@@ -22,7 +22,7 @@
     </div>
     <div class="stat-chip stat-chip--active">
       <span class="stat-num">{{ stats.active }}</span>
-      <span class="stat-label">推进中</span>
+      <span class="stat-label">当前推进</span>
     </div>
     <div class="stat-chip stat-chip--warn">
       <span class="stat-num">{{ stats.high_risk }}</span>
@@ -84,7 +84,10 @@
     <span class="priority-label">首要建议</span>
     <p>
       <strong>{{ judgement.top_control_recommendation.project_name }}</strong>
-      <span class="priority-action">{{ action_label(judgement.top_control_recommendation.control_action) }}</span>
+      <span
+        class="priority-action"
+        data-priority-action="{{ judgement.top_control_recommendation.control_action }}"
+      >{{ action_label(judgement.top_control_recommendation.control_action) }}</span>
       — {{ judgement.top_control_recommendation.note }}
     </p>
   </div>
@@ -97,16 +100,129 @@
   {% endif %}
 </section>
 
+<section class="card card--projects card--table">
+  <div class="card-head card-head--projects">
+    <div>
+      <h2>项目总览</h2>
+      <span class="card-meta" data-project-count>{{ stats.total }} 个项目</span>
+    </div>
+    <div class="status-filter" aria-label="按状态筛选项目">
+      <button class="filter-btn is-active" type="button" data-status-filter="all" aria-pressed="true">全部</button>
+      <button class="filter-btn" type="button" data-status-filter="active" aria-pressed="false">当前推进</button>
+      <button class="filter-btn" type="button" data-status-filter="maintain" aria-pressed="false">维持运行</button>
+      <button class="filter-btn" type="button" data-status-filter="observe" aria-pressed="false">观察孵化</button>
+      <button class="filter-btn" type="button" data-status-filter="paused" aria-pressed="false">短期暂停</button>
+      <button class="filter-btn" type="button" data-status-filter="archived" aria-pressed="false">历史归档</button>
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    <table class="project-table" data-project-table>
+      <thead>
+        <tr>
+          <th class="col-name"><button class="sort-btn" type="button" data-sort-key="name">项目<span class="sort-indicator"></span></button></th>
+          <th class="col-status"><button class="sort-btn" type="button" data-sort-key="status">状态<span class="sort-indicator"></span></button></th>
+          <th class="col-score" title="主观价值 1-5"><button class="sort-btn" type="button" data-sort-key="value">价值<span class="sort-indicator"></span></button></th>
+          <th class="col-risk"><button class="sort-btn" type="button" data-sort-key="risk">风险<span class="sort-indicator"></span></button></th>
+          <th class="col-score" title="AI 接管 0-5"><button class="sort-btn" type="button" data-sort-key="ai">AI<span class="sort-indicator"></span></button></th>
+          <th class="col-score col-score--human" title="人工介入 0-5"><button class="sort-btn" type="button" data-sort-key="human">介入<span class="sort-indicator"></span></button></th>
+          <th class="col-action"><button class="sort-btn" type="button" data-sort-key="action">动作<span class="sort-indicator"></span></button></th>
+          <th class="col-time"><button class="sort-btn" type="button" data-sort-key="updated">更新<span class="sort-indicator"></span></button></th>
+          <th class="col-detail">详情</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in projects %}
+        <tr
+          class="project-tr project-tr--{{ p.status }}"
+          data-project-row
+          data-project-id="{{ p.id }}"
+          data-status="{{ p.status }}"
+          data-name="{{ p.name }}"
+          data-value="{{ p.value_score }}"
+          data-risk="{{ p.risk_level }}"
+          data-ai="{{ p.ai_delegation_level }}"
+          data-human="{{ p.human_intervention_level }}"
+          data-action="{{ p.control_action }}"
+          data-updated="{{ p.updated_at or '' }}"
+        >
+          <td class="col-name">
+            <a href="/project/{{ p.id }}" class="table-project-link">{{ p.name }}</a>
+          </td>
+          <td class="col-status">{{ tag_status(p.status) }}</td>
+          <td class="col-score">{{ level_bar(p.value_score, compact=true) }}</td>
+          <td class="col-risk">{{ tag_risk(p.risk_level) }}</td>
+          <td class="col-score">{{ level_bar(p.ai_delegation_level, compact=true) }}</td>
+          <td class="col-score col-score--human">{{ level_bar(p.human_intervention_level, compact=true) }}</td>
+          <td class="col-action">{{ tag_action(p.control_action) }}</td>
+          <td class="col-time"><time>{{ p.updated_at or '—' }}</time></td>
+          <td class="col-detail">
+            <button
+              class="note-toggle"
+              type="button"
+              data-detail-toggle="{{ p.id }}"
+              aria-expanded="false"
+            >详情</button>
+          </td>
+        </tr>
+        <tr class="project-detail-row" data-detail-for="{{ p.id }}" hidden>
+          <td colspan="9">
+            <div class="project-row-detail">
+              <div>
+                <span>动作说明</span>
+                <p>{{ p.control_action_note or '暂无' }}</p>
+              </div>
+              <div>
+                <span>最近进展</span>
+                <p>{{ p.latest_update or '暂无' }}</p>
+              </div>
+              <div>
+                <span>风险</span>
+                <p>{{ p.risk_note or '暂无' }}</p>
+              </div>
+              <div>
+                <span>约束</span>
+                <p>{{ p.constraint or '暂无' }}</p>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
 <section class="card card--timeline">
-  <div class="card-head">
-    <h2>近期项目记录</h2>
-    <span class="card-meta">最近动态</span>
+  <div class="card-head card-head--timeline">
+    <div>
+      <h2>近期项目记录</h2>
+      <span class="card-meta" data-timeline-count>最近动态</span>
+    </div>
+    {% if recent_events %}
+    <div class="timeline-controls">
+      <label class="days-filter">
+        <span>显示</span>
+        <select data-days-filter>
+          <option value="7">过去 7 天</option>
+          <option value="14">过去 14 天</option>
+          <option value="30" selected>过去 30 天</option>
+          <option value="all">全部</option>
+        </select>
+      </label>
+      <button class="collapse-btn" type="button" data-collapse-timeline aria-expanded="true">收起</button>
+    </div>
+    {% endif %}
   </div>
 
   {% if recent_events %}
-  <div class="timeline">
+  <div data-timeline-body>
+  <div class="timeline" data-timeline-list>
     {% for e in recent_events %}
-    <article class="timeline-item timeline-item--{{ e.event_type }}">
+    <article
+      class="timeline-item timeline-item--{{ e.event_type }}"
+      data-event-date="{{ e.happened_at or e.created_at }}"
+    >
       <div class="timeline-marker"></div>
       <div class="timeline-main">
         <div class="timeline-top">
@@ -125,53 +241,15 @@
     </article>
     {% endfor %}
   </div>
+  <div class="empty-state empty-state--compact" data-timeline-empty hidden>
+    <p>所选时间范围内暂无记录</p>
+  </div>
+  </div>
   {% else %}
   <div class="empty-state">
     <p>暂无近期记录</p>
     <span>新的项目进展会显示在这里。</span>
   </div>
   {% endif %}
-</section>
-
-<section class="card card--projects card--table">
-  <div class="card-head">
-    <h2>项目总览</h2>
-    <span class="card-meta">{{ stats.total }} 个项目</span>
-  </div>
-
-  <div class="table-wrap">
-    <table class="project-table">
-      <thead>
-        <tr>
-          <th class="col-name">项目</th>
-          <th class="col-status">状态</th>
-          <th class="col-score" title="主观价值 1-5">价值</th>
-          <th class="col-risk">风险</th>
-          <th class="col-score" title="AI 接管 0-5">AI</th>
-          <th class="col-score col-score--human" title="人工介入 0-5">介入</th>
-          <th class="col-action">动作</th>
-          <th class="col-note">说明</th>
-          <th class="col-time">更新</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for p in projects %}
-        <tr class="project-tr project-tr--{{ p.status }}">
-          <td class="col-name">
-            <a href="/project/{{ p.id }}" class="table-project-link">{{ p.name }}</a>
-          </td>
-          <td class="col-status">{{ tag_status(p.status) }}</td>
-          <td class="col-score">{{ level_bar(p.value_score, compact=true) }}</td>
-          <td class="col-risk">{{ tag_risk(p.risk_level) }}</td>
-          <td class="col-score">{{ level_bar(p.ai_delegation_level, compact=true) }}</td>
-          <td class="col-score col-score--human">{{ level_bar(p.human_intervention_level, compact=true) }}</td>
-          <td class="col-action">{{ tag_action(p.control_action) }}</td>
-          <td class="col-note" title="{{ p.control_action_note }}">{{ p.control_action_note }}</td>
-          <td class="col-time"><time>{{ p.updated_at or '—' }}</time></td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
 </section>
 {% endblock %}

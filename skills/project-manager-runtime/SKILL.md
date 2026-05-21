@@ -5,7 +5,7 @@ description: Use this repository as an external-Agent personal project manager r
 
 # Project Manager Runtime
 
-Skill version: `0.1.0`
+Skill version: `0.2.0`
 
 Use this skill to operate the repository as a project-manager runtime for an external Agent. The user talks naturally; the Agent reads context, decides whether to discuss or write, and keeps the workspace clean.
 
@@ -48,6 +48,26 @@ uv run python -m app.agent_tools export
 - New project: use `project_creations` only after explicit user confirmation.
 - Stop a project: prefer `project_deletions` with `mode: "archive"`.
 - Framework friction: optionally record feedback in `.agent-workspace/usage/usage.jsonl`; do not patch tracked files unless asked.
+
+## Status And Action Protocol
+
+Use the fixed status and action enums from `app/prompts/project_control_panel.md`.
+
+Status intent:
+
+- `active`: current focus, worth spending effort now.
+- `maintain`: stable enough to keep running with low attention.
+- `observe`: worth thinking about or validating without execution pressure.
+- `paused`: temporarily set aside, can be resumed later.
+- `archived`: historical record outside the active project pool.
+
+Action intent:
+
+- `control_action` must be one of the fixed enum values. Do not invent custom action words.
+- Keep `control_action_note` within 80 Chinese characters.
+- Put longer background into `latest_update` or `project_events`.
+- Prefer `project_events` for ordinary progress, thoughts, feedback, decisions, risks, and blockers.
+- Use `project_updates` only when the current project judgement changes.
 
 4. If writing, create a temporary JSON payload under `.agent-workspace/apply/`.
 

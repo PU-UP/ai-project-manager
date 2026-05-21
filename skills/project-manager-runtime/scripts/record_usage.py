@@ -9,7 +9,7 @@ from pathlib import Path
 import tomllib
 
 
-SKILL_VERSION = "0.1.0"
+SKILL_VERSION = "0.2.0"
 ROOT_DIR = Path(__file__).resolve().parents[3]
 USAGE_PATH = ROOT_DIR / ".agent-workspace" / "usage" / "usage.jsonl"
 

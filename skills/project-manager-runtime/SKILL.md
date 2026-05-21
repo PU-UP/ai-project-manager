@@ -5,7 +5,7 @@ description: Use this repository as an external-Agent personal project manager r
 
 # Project Manager Runtime
 
-Skill version: `0.2.0`
+Skill version: `0.3.0`
 
 Use this skill to operate the repository as a project-manager runtime for an external Agent. The user talks naturally; the Agent reads context, decides whether to discuss or write, and keeps the workspace clean.
 
@@ -45,6 +45,8 @@ uv run python -m app.agent_tools export
 - Discussion only: answer from context, do not write the database.
 - Progress or feedback: add `project_events`.
 - Changed project judgement: add `project_updates`.
+- Renamed project: add `project_renames`.
+- Changed project constraint: add `project_constraint_updates`.
 - New project: use `project_creations` only after explicit user confirmation.
 - Stop a project: prefer `project_deletions` with `mode: "archive"`.
 - Framework friction: optionally record feedback in `.agent-workspace/usage/usage.jsonl`; do not patch tracked files unless asked.
@@ -68,6 +70,8 @@ Action intent:
 - Put longer background into `latest_update` or `project_events`.
 - Prefer `project_events` for ordinary progress, thoughts, feedback, decisions, risks, and blockers.
 - Use `project_updates` only when the current project judgement changes.
+- Use `project_renames` for project name changes; do not maintain the database directly.
+- Use `project_constraint_updates` for scope or anti-expansion constraint changes.
 
 4. If writing, create a temporary JSON payload under `.agent-workspace/apply/`.
 

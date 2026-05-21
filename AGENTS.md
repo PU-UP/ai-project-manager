@@ -37,13 +37,16 @@ GET http://127.0.0.1:8000/api/context
 - **仅输出严格 JSON**，无 markdown、无解释文字。
 - 顶层结构支持：
   - `project_creations`
+  - `project_renames`
   - `project_updates`
+  - `project_constraint_updates`
   - `project_events`
   - `project_deletions`
   - `system_judgement`
 - 未知项目不要自动创建；只有用户明确确认时才写入 `project_creations`。
 - 普通进展、反馈、想法、风险和决策优先写入 `project_events`。
 - 只有项目当前判断发生变化时才写入 `project_updates`。
+- 项目改名写入 `project_renames`；项目约束变化写入 `project_constraint_updates`。
 - 默认归档，不默认彻底删除。
 - 遵守各项目 `constraint`。
 - `status` 使用固定五类：`active` 当前推进、`maintain` 维持运行、`observe` 观察孵化、`paused` 短期暂停、`archived` 历史归档。

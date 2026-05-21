@@ -34,7 +34,9 @@ def build_context() -> dict:
         "latest_system_judgement": latest_judgement,
         "agent_operations": {
             "project_creations": "用户明确确认新项目后创建项目；不要凭空创建。",
+            "project_renames": "重命名已有项目，并同步历史事件中的项目显示名。",
             "project_updates": "修改项目当前状态、价值、风险、控制动作和最新进展。",
+            "project_constraint_updates": "更新已有项目的范围约束或防蔓延约束。",
             "project_events": "追加项目进展、反馈、风险、决策、想法或阻塞事件。",
             "project_deletions": "默认归档；只有用户明确要求彻底删除时使用 delete。",
         },
@@ -70,7 +72,9 @@ def apply_raw_json(
     changed_projects = sorted(
         set(
             result["created"]
+            + result["renamed"]
             + result["updated"]
+            + result["constraint_updated"]
             + result["archived"]
             + result["deleted"]
             + result["events"]
@@ -82,7 +86,9 @@ def apply_raw_json(
         "ok": True,
         "error": None,
         "created": result["created"],
+        "renamed": result["renamed"],
         "updated": result["updated"],
+        "constraint_updated": result["constraint_updated"],
         "archived": result["archived"],
         "deleted": result["deleted"],
         "events": result["events"],

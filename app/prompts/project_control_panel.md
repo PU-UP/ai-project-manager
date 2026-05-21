@@ -43,6 +43,8 @@
 17. 每次输出必须是严格 JSON，不要包含 markdown，不要包含解释文字。
 18. 用户没有明确要求写入时，可以只追加 project_events 和 system_judgement，不必强行改项目状态。
 19. project_events 用来记录事实、反馈、决策、风险、想法和阻塞；project_updates 用来改变项目当前判断。
+20. 项目重命名使用 project_renames，不要通过直接数据库维护绕过协议。
+21. 项目约束变化使用 project_constraint_updates；不要把约束改写塞进 latest_update。
 
 ## 字段枚举
 
@@ -85,6 +87,13 @@
       "reason": "创建原因"
     }
   ],
+  "project_renames": [
+    {
+      "project_name": "已有项目名称（必须与已有项目精确匹配）",
+      "new_project_name": "新的项目名称",
+      "reason": "重命名原因"
+    }
+  ],
   "project_updates": [
     {
       "project_name": "项目名称（必须与已有项目精确匹配）",
@@ -98,6 +107,13 @@
       "control_action_note": "具体控制动作说明",
       "latest_update": "最近一次进展描述",
       "reason": "更新原因简述"
+    }
+  ],
+  "project_constraint_updates": [
+    {
+      "project_name": "已有项目名称（必须与已有项目精确匹配）",
+      "project_constraint": "新的项目约束",
+      "reason": "调整约束原因"
     }
   ],
   "project_events": [
@@ -141,5 +157,7 @@
 - 如果用户输入非常短：基于现有项目状态做保守更新；不要过度推断；不要大规模修改项目状态。
 - 只更新用户输入中明确提及或合理推断涉及的项目；未提及字段可省略（程序会保留原值）。
 - project_updates 中只包含需要更新的项目。
+- project_renames 只在用户明确表达项目名称变化、合并后改名或当前名称不再准确时使用；新名称不得与已有项目冲突。
+- project_constraint_updates 只在项目边界、防蔓延规则或约束表述确实变化时使用。
 - project_events 中只包含值得保留的事件，不要把每句话都机械记录。
 - project_deletions 默认 mode=archive；只有用户明确要求“彻底删除/移除数据”时才使用 mode=delete。

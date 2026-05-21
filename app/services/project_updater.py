@@ -5,9 +5,11 @@ from app.datetime_util import now_beijing
 from app.models import PROJECT_ALIASES
 from app.schemas import (
     ControlResponse,
+    ProjectConstraintUpdate,
     ProjectCreation,
     ProjectDeletion,
     ProjectEventInput,
+    ProjectRename,
     ProjectUpdate,
     row_to_event_dict,
     row_to_project_dict,
@@ -75,6 +77,56 @@ def list_recent_events(conn, limit: int = 20, project_id: int | None = None) -> 
             (project_id, limit),
         ).fetchall()
     return [row_to_event_dict(r) for r in rows]
+
+
+def rename_project(
+    conn,
+    item: ProjectRename,
+    project: dict,
+    projects: list[dict],
+    now: str,
+) -> str:
+    new_name = item.new_project_name.strip()
+    if not new_name:
+        raise ValueError("new_project_name 不能为空")
+    for p in projects:
+        if p["id"] != project["id"] and _normalize_name(p["name"]) == _normalize_name(new_name):
+            raise ValueError(f"项目名已存在: {new_name}")
+
+    conn.execute(
+        """
+        UPDATE projects
+        SET name = ?, updated_at = ?
+        WHERE id = ?
+        """,
+        (new_name, now, project["id"]),
+    )
+    conn.execute(
+        """
+        UPDATE project_events
+        SET project_name = ?
+        WHERE project_id = ?
+        """,
+        (new_name, project["id"]),
+    )
+    return new_name
+
+
+def update_project_constraint(
+    conn,
+    item: ProjectConstraintUpdate,
+    project: dict,
+    now: str,
+) -> str:
+    conn.execute(
+        """
+        UPDATE projects
+        SET project_constraint = ?, updated_at = ?
+        WHERE id = ?
+        """,
+        (item.project_constraint, now, project["id"]),
+    )
+    return project["name"]
 
 
 def create_project(conn, item: ProjectCreation, now: str) -> str:
@@ -157,12 +209,15 @@ def apply_updates(
 ) -> dict:
     projects = list_projects(conn)
     created: list[str] = []
+    renamed: list[str] = []
     updated: list[str] = []
+    constraint_updated: list[str] = []
     archived: list[str] = []
     deleted: list[str] = []
     events: list[str] = []
     skipped: list[str] = []
     invalid: list[dict] = []
+    renamed_lookup: dict[str, str] = {}
     now = now_beijing()
 
     for item in response.project_creations:
@@ -178,8 +233,26 @@ def apply_updates(
         conn.commit()
         projects = list_projects(conn)
 
-    for item in response.project_updates:
+    for item in response.project_renames:
         project = match_project(item.project_name, projects)
+        if not project:
+            skipped.append(item.project_name)
+            continue
+        try:
+            new_name = rename_project(conn, item, project, projects, now)
+            renamed.append(f"{project['name']} -> {new_name}")
+            renamed_lookup[_normalize_name(item.project_name)] = new_name
+            renamed_lookup[_normalize_name(project["name"])] = new_name
+        except Exception as e:
+            invalid.append({"project": item.project_name, "error": str(e)})
+
+    if renamed:
+        conn.commit()
+        projects = list_projects(conn)
+
+    for item in response.project_updates:
+        lookup_name = renamed_lookup.get(_normalize_name(item.project_name), item.project_name)
+        project = match_project(lookup_name, projects)
         if not project:
             skipped.append(item.project_name)
             continue
@@ -221,8 +294,25 @@ def apply_updates(
             row_invalid.append({"project": item.project_name, "error": str(e)})
             invalid.extend(row_invalid)
 
+    for item in response.project_constraint_updates:
+        lookup_name = renamed_lookup.get(_normalize_name(item.project_name), item.project_name)
+        project = match_project(lookup_name, projects)
+        if not project:
+            skipped.append(item.project_name)
+            continue
+        try:
+            constraint_updated.append(update_project_constraint(conn, item, project, now))
+            for p in projects:
+                if p["id"] == project["id"]:
+                    p["constraint"] = item.project_constraint
+                    p["updated_at"] = now
+                    break
+        except Exception as e:
+            invalid.append({"project": item.project_name, "error": str(e)})
+
     for item in response.project_deletions:
-        project = match_project(item.project_name, projects)
+        lookup_name = renamed_lookup.get(_normalize_name(item.project_name), item.project_name)
+        project = match_project(lookup_name, projects)
         if not project:
             skipped.append(item.project_name)
             continue
@@ -240,7 +330,8 @@ def apply_updates(
         projects = list_projects(conn)
 
     for item in response.project_events:
-        project = match_project(item.project_name, projects)
+        lookup_name = renamed_lookup.get(_normalize_name(item.project_name), item.project_name)
+        project = match_project(lookup_name, projects)
         if not project:
             skipped.append(item.project_name)
             continue
@@ -252,7 +343,9 @@ def apply_updates(
     conn.commit()
     return {
         "created": created,
+        "renamed": renamed,
         "updated": updated,
+        "constraint_updated": constraint_updated,
         "archived": archived,
         "deleted": deleted,
         "events": events,
@@ -267,8 +360,15 @@ def updates_summary(response: ControlResponse) -> str:
             "project_creations": [
                 u.model_dump(exclude_none=True) for u in response.project_creations
             ],
+            "project_renames": [
+                u.model_dump(exclude_none=True) for u in response.project_renames
+            ],
             "project_updates": [
                 u.model_dump(exclude_none=True) for u in response.project_updates
+            ],
+            "project_constraint_updates": [
+                u.model_dump(exclude_none=True)
+                for u in response.project_constraint_updates
             ],
             "project_events": [
                 u.model_dump(exclude_none=True) for u in response.project_events

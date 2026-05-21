@@ -11,6 +11,7 @@
 - 读取当前所有项目状态
 - 记录近期进展、反馈、风险、想法、决策和阻塞
 - 更新项目价值、风险、AI 接管程度、人工介入程度和控制动作
+- 重命名项目，更新项目约束
 - 在你不知道做什么时，基于记录给出方向判断
 - 将项目局面可视化给用户查看
 
@@ -33,7 +34,7 @@
 - 系统级判断展示
 - 近期项目事件流
 - Agent 通过 CLI / API 导出上下文
-- Agent 通过 JSON 创建、更新、记录、归档或删除项目
+- Agent 通过 JSON 创建、重命名、更新、记录、调整约束、归档或删除项目
 - SQLite 存储
 - `logs/interactions.jsonl` 记录 Agent 交互
 - 可选内置 LLM 代码保留，但默认不作为核心入口
@@ -53,7 +54,9 @@ skills/project-manager-runtime/
 Agent 的输出 JSON 顶层支持：
 
 - `project_creations`：用户明确确认后创建新项目
+- `project_renames`：重命名已有项目
 - `project_updates`：更新项目当前状态和控制判断
+- `project_constraint_updates`：更新已有项目的范围约束
 - `project_events`：追加项目事件，形成近期进展记录
 - `project_deletions`：归档或删除项目，默认归档
 - `system_judgement`：本轮系统级判断

@@ -47,6 +47,18 @@ class ProjectUpdate(BaseModel):
     reason: str | None = None
 
 
+class ProjectRename(BaseModel):
+    project_name: str
+    new_project_name: str
+    reason: str | None = None
+
+
+class ProjectConstraintUpdate(BaseModel):
+    project_name: str
+    project_constraint: str
+    reason: str | None = None
+
+
 class ProjectCreation(BaseModel):
     project_name: str
     status: Status = "observe"
@@ -96,7 +108,9 @@ class SystemJudgement(BaseModel):
 
 class ControlResponse(BaseModel):
     project_creations: list[ProjectCreation] = Field(default_factory=list)
+    project_renames: list[ProjectRename] = Field(default_factory=list)
     project_updates: list[ProjectUpdate] = Field(default_factory=list)
+    project_constraint_updates: list[ProjectConstraintUpdate] = Field(default_factory=list)
     project_events: list[ProjectEventInput] = Field(default_factory=list)
     project_deletions: list[ProjectDeletion] = Field(default_factory=list)
     system_judgement: SystemJudgement
@@ -106,7 +120,14 @@ class ControlResponse(BaseModel):
     def ensure_list(cls, v):
         return v or []
 
-    @field_validator("project_creations", "project_events", "project_deletions", mode="before")
+    @field_validator(
+        "project_creations",
+        "project_renames",
+        "project_constraint_updates",
+        "project_events",
+        "project_deletions",
+        mode="before",
+    )
     @classmethod
     def ensure_operation_lists(cls, v):
         return v or []

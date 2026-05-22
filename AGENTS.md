@@ -32,7 +32,20 @@ GET http://127.0.0.1:8000/api/context
 
 它定义项目经理判断规则、输出 JSON 结构、项目创建、更新、记录和归档策略。
 
-## 3. 根据用户自然语言产出 JSON
+## 3. 判断是讨论还是写入
+
+如果用户只是想围绕某个项目讨论、梳理、追问或恢复上下文，默认进入 Project Discussion Mode：
+
+- 先读取项目 memory 字段，尤其是 `origin`、`current_goal`、`key_judgements`、`validated_facts`、`open_questions`、`discussion_brief`，并结合 `recent_events`、`risk_note`、`project_constraint`。
+- 用自然语言回答，不要为了讨论本身强行产出 apply JSON。
+- 默认不写入数据库，除非用户明确要求记录、保存、更新，或确认你提出的写入摘要。
+- 如果多轮对话持续围绕同一项目，沿用同一项目上下文，直到用户切换项目。
+- 如果项目记忆缺失或新项目信息不足，向用户提出 1-3 个聚焦问题，不要把它变成复杂表单。
+- 不要虚构项目背景；尚未确认的内容只能作为问题保留，不能写成已验证事实。
+
+Skill 的触发是按轮次发生的，不是持久后台会话；但对话上下文可以承载连续项目讨论。只要用户仍在讨论同一项目，Agent 应把它当作同一条讨论线索处理。
+
+## 4. 写入时根据用户自然语言产出 JSON
 
 - **仅输出严格 JSON**，无 markdown、无解释文字。
 - 顶层结构支持：
@@ -87,9 +100,11 @@ Discussion Mode 前置规则：
 
 - 项目讨论模式默认先读取项目 memory 字段，尤其是 `origin`、`current_goal`、`key_judgements`、`validated_facts`、`open_questions`、`discussion_brief`、`recent_events`、`risk_note`、`project_constraint`。
 - 讨论模式默认不写入数据库，除非用户明确要求记录或确认写入。
+- 讨论中形成值得长期保存的内容时，先总结建议写入项；用户确认后再写入。
+- 普通讨论结论优先写入 `project_events`；当前判断变化写入 `project_updates`；长期项目理解变化写入 `project_memory_updates`。
 - 本仓库目前只提供上下文结构，不实现独立聊天 UI 或 discussion skill。
 
-## 4. 提交更新
+## 5. 提交更新
 
 ```bash
 uv run python -m app.agent_tools apply -f response.json
@@ -109,13 +124,13 @@ Content-Type: application/json
 }
 ```
 
-## 5. 辅助读取接口
+## 6. 辅助读取接口
 
 ```http
 GET http://127.0.0.1:8000/api/projects
 GET http://127.0.0.1:8000/api/events?limit=30
 ```
 
-## 6. 刷新页面
+## 7. 刷新页面
 
 首页会展示更新后的系统判断、近期项目记录和项目进度表。详情页会展示单个项目的控制动作、风险、约束和事件记录。

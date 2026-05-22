@@ -34,6 +34,7 @@ def build_context() -> dict:
         "recent_events": recent_events,
         "latest_system_judgement": latest_judgement,
         "agent_operations": {
+            "project_discussion_mode": "讨论、梳理或追问项目时，默认只读取项目记忆和近期事件并自然语言回答；只有用户明确要求或确认记录后才写入。",
             "project_creations": "用户明确确认新项目后创建项目；不要凭空创建。",
             "project_renames": "重命名已有项目，并同步历史事件中的项目显示名。",
             "project_updates": "修改项目当前状态、价值、风险、控制动作和最新进展。",
@@ -43,7 +44,7 @@ def build_context() -> dict:
             "project_deletions": "默认归档；只有用户明确要求彻底删除时使用 delete。",
         },
         "prompt_path": "app/prompts/project_control_panel.md",
-        "prompt_hint": "请阅读上述 prompt 文件，根据用户描述、当前项目进度和近期事件输出严格 JSON。",
+        "prompt_hint": "请阅读上述 prompt 文件；项目讨论时自然语言回答且默认不写入，生成 apply payload 时才输出严格 JSON。",
     }
 
 

@@ -5,7 +5,7 @@ description: Use this repository as an external-Agent personal project manager r
 
 # Project Manager Runtime
 
-Skill version: `0.5.0`
+Skill version: `0.6.0`
 
 Use this skill to operate the repository as a project-manager runtime for an external Agent. The user talks naturally; the Agent reads context, decides whether to discuss or write, and keeps the workspace clean.
 
@@ -52,7 +52,7 @@ uv run python -m app.agent_tools export
 
 3. Classify the user request:
 
-- Discussion only: answer from context, do not write the database.
+- Project discussion: read context and project memory, discuss in natural language, and stay read-only unless the user explicitly asks to record or confirms a proposed write.
 - Progress or feedback: add `project_events`.
 - Changed project judgement: add `project_updates`.
 - Renamed project: add `project_renames`.
@@ -114,7 +114,28 @@ Do not use `project_memory_updates` for:
 - Facts that are not yet confirmed.
 - Mechanical updates on every apply.
 
-Discussion mode should first read memory fields, especially `origin`, `current_goal`, `key_judgements`, `validated_facts`, `open_questions`, `discussion_brief`, plus `recent_events`, `risk_note`, and `project_constraint`. Discussion is read-only by default unless the user explicitly asks to record or confirms a write. This version only provides the context structure; it does not add a separate discussion skill or chat UI.
+## Project Discussion Mode
+
+Use discussion mode when the user asks to discuss, think through, review, or make sense of a specific project without clearly asking to record a change.
+
+Discussion mode should first read memory fields, especially `origin`, `current_goal`, `key_judgements`, `validated_facts`, `open_questions`, `discussion_brief`, plus `recent_events`, `risk_note`, and `project_constraint`.
+
+Discussion mode is read-only by default:
+
+- Answer in natural language from the current context.
+- Do not create an apply payload just because the conversation is useful.
+- Do not write the database unless the user explicitly says to record, save, update, or confirms a proposed write.
+- If a multi-turn discussion stays on the same project, keep using the same project context until the user switches topics.
+
+This skill is invoked per turn; it is not a persistent app mode by itself. Conversation context can still carry an ongoing project discussion across turns, and the Agent should treat that as one discussion thread when the project remains clear.
+
+Write after discussion only when durable content has formed and the user has asked for or confirmed recording:
+
+- Use `project_events` for confirmed facts, feedback, decisions, risks, and notable discussion outcomes.
+- Use `project_updates` when current judgement, status, control action, risk, or delegation changes.
+- Use `project_memory_updates` when the long-term project understanding changes.
+
+When memory is missing or thin, ask 1-3 focused questions instead of turning the project into a form. Prioritize why the project exists, what the current stage is trying to validate, what is already confirmed, and what remains uncertain. Do not invent missing background; put uncertain items in `open_questions` only after the user confirms they should be recorded.
 
 4. If writing, create a temporary JSON payload under `.agent-workspace/apply/`.
 

@@ -134,7 +134,7 @@
         <div class="timeline-main">
           <div class="timeline-top">
             <span class="timeline-type">{{ event_label(e.event_type) }}</span>
-            <time>{{ e.happened_at or e.created_at }}</time>
+            <time>{{ e.display_at or e.created_at }}</time>
           </div>
           <p>{{ e.summary }}</p>
           {% if e.evidence or e.decision or e.next_action %}

@@ -178,11 +178,17 @@ def _parse_string_list(raw) -> list[str]:
 
 def row_to_event_dict(row) -> dict:
     """sqlite3.Row → API/模板用 event dict。"""
-    from app.datetime_util import format_display
+    from app.datetime_util import format_display, format_event_display, has_time_component
 
     d = dict(row)
+    raw_created_at = d.get("created_at")
+    raw_happened_at = d.get("happened_at")
+    d["display_at"] = format_event_display(raw_happened_at, raw_created_at, with_seconds=False)
     if d.get("created_at"):
         d["created_at"] = format_display(d["created_at"], with_seconds=False)
     if d.get("happened_at"):
-        d["happened_at"] = format_display(d["happened_at"], with_seconds=False)
+        if has_time_component(d["happened_at"]):
+            d["happened_at"] = format_display(d["happened_at"], with_seconds=False)
+        else:
+            d["happened_at"] = format_display(d["happened_at"], with_seconds=False)[:10]
     return d

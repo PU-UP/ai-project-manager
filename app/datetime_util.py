@@ -1,5 +1,6 @@
 """北京时间（UTC+8）存储与展示。"""
 
+import re
 from datetime import datetime, timedelta, timezone
 
 # 中国不使用夏令时，固定 UTC+8
@@ -7,6 +8,7 @@ BEIJING = timezone(timedelta(hours=8))
 STORAGE_FMT = "%Y-%m-%d %H:%M:%S"
 DISPLAY_FMT = "%Y-%m-%d %H:%M"
 DISPLAY_FMT_SEC = "%Y-%m-%d %H:%M:%S"
+DATE_FMT = "%Y-%m-%d"
 
 
 def now_beijing() -> str:
@@ -46,3 +48,41 @@ def format_display(ts: str | None, *, with_seconds: bool = False) -> str:
         return ts or ""
     fmt = DISPLAY_FMT_SEC if with_seconds else DISPLAY_FMT
     return dt.strftime(fmt)
+
+
+def has_time_component(ts: str | None) -> bool:
+    """判断输入是否显式包含时分信息。"""
+    if not ts or not str(ts).strip():
+        return False
+    s = str(ts).strip()
+    return bool(
+        re.search(r"\d{4}-\d{2}-\d{2}[ T]\d{1,2}:\d{2}", s)
+        or re.search(r"[T ]\d{1,2}:\d{2}", s)
+    )
+
+
+def format_event_display(
+    happened_at: str | None,
+    created_at: str | None,
+    *,
+    with_seconds: bool = False,
+) -> str:
+    """事件展示时间。
+
+    如果 Agent 只给了日期，如 2026-05-22，不把它展示成 00:00；
+    这种情况下用事件日期 + 记录创建时间，保留正确日期和真实写入时间。
+    """
+    happened_dt = _parse_timestamp(happened_at) if happened_at else None
+    created_dt = _parse_timestamp(created_at) if created_at else None
+    fmt = DISPLAY_FMT_SEC if with_seconds else DISPLAY_FMT
+    time_fmt = "%H:%M:%S" if with_seconds else "%H:%M"
+
+    if happened_dt and has_time_component(happened_at):
+        return happened_dt.strftime(fmt)
+    if happened_dt and created_dt:
+        return f"{happened_dt.strftime(DATE_FMT)} {created_dt.strftime(time_fmt)}"
+    if happened_dt:
+        return happened_dt.strftime(DATE_FMT)
+    if created_dt:
+        return created_dt.strftime(fmt)
+    return created_at or happened_at or ""

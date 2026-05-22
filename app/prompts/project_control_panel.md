@@ -216,4 +216,5 @@
 - progress_percent 是阶段判断，不是精确工程指标。
 - discussion_brief 要短，但足以让 Agent 后续讨论时不用用户重述项目背景。
 - project_events 中只包含值得保留的事件，不要把每句话都机械记录。
+- project_events 的 happened_at 只在用户明确给出事件发生日期或时间时填写；如果只是本轮记录时间，省略 happened_at，让系统使用写入时间。
 - project_deletions 默认 mode=archive；只有用户明确要求“彻底删除/移除数据”时才使用 mode=delete。

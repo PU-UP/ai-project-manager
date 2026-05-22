@@ -221,14 +221,14 @@
     {% for e in recent_events %}
     <article
       class="timeline-item timeline-item--{{ e.event_type }}"
-      data-event-date="{{ e.happened_at or e.created_at }}"
+      data-event-date="{{ e.display_at or e.created_at }}"
     >
       <div class="timeline-marker"></div>
       <div class="timeline-main">
         <div class="timeline-top">
           <span class="timeline-project">{{ e.project_name }}</span>
           <span class="timeline-type">{{ event_label(e.event_type) }}</span>
-          <time>{{ e.happened_at or e.created_at }}</time>
+          <time>{{ e.display_at or e.created_at }}</time>
         </div>
         <p>{{ e.summary }}</p>
         {% if e.decision or e.next_action %}

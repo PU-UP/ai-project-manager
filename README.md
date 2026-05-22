@@ -92,8 +92,24 @@ uv run python -m app.seed --force
 
 ## 本地运行
 
+推荐使用便捷启动脚本：
+
+```powershell
+.\start_dashboard.cmd
+```
+
+脚本会默认启动 http://127.0.0.1:8000 并打开浏览器。如果 8000 已经是本项目服务，会直接打开现有页面；如果被其他服务占用，会自动尝试 8001-8010。
+
+也可以指定端口：
+
+```powershell
+.\scripts\start_dashboard.ps1 -Port 8010
+```
+
+手动启动方式：
+
 ```bash
-uv run uvicorn app.main:app --reload
+uv run python -m uvicorn app.main:app --reload
 ```
 
 浏览器打开：http://127.0.0.1:8000

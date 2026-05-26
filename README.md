@@ -49,6 +49,14 @@ skills/project-manager-runtime/
 
 它约定了 Agent 如何读取上下文、判断是否写入、应用 JSON 更新、记录低频使用反馈，并保证日常使用不会产生 Git 记录。使用记录写入 `.agent-workspace/usage/usage.jsonl`，该目录被 Git 忽略。
 
+另有一个框架升级技能：
+
+```text
+skills/project-manager-upgrader/
+```
+
+当用户讨论系统反馈、升级框架、优化 skill / prompt / schema / CLI / API / UI / logging / docs 时使用。若 Agent 不确定用户是在记录项目进展还是优化框架，应先询问。
+
 ## Agent 协议
 
 Agent 的输出 JSON 顶层支持：
@@ -76,6 +84,27 @@ uv sync
 
 ```bash
 pip install -r requirements.txt
+```
+
+## 常用诊断
+
+导出简版上下文或按项目聚合近期事件：
+
+```bash
+uv run python -m app.agent_tools export --brief
+uv run python -m app.agent_tools export --group-events
+```
+
+复盘框架 feedback 并生成升级建议：
+
+```bash
+uv run python -m app.agent_tools feedback-report
+```
+
+检查运行时、技能版本和本地记录状态：
+
+```bash
+uv run python -m app.agent_tools doctor
 ```
 
 ## 初始化数据库

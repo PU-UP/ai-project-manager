@@ -47,6 +47,8 @@
 21. 项目约束变化使用 project_constraint_updates；不要把约束改写塞进 latest_update。
 22. project_memory_updates 用来维护项目长期记忆，而不是记录每条进展；普通事实优先写 project_events。
 23. 只有项目初衷、当前目标、阶段进度、关键判断、已验证事实、未验证问题或讨论摘要发生变化时，才使用 project_memory_updates。
+24. 当用户是在讨论本框架自身的反馈、升级、技能、Prompt、Schema、CLI/API、UI、日志或文档时，不要按普通项目进展写入；应切换到框架升级流程，先复盘反馈并提出升级建议。
+25. 如果无法判断用户是想更新项目数据，还是想优化项目经理框架本身，先问一个简短澄清问题，不要直接写入。
 
 ## Project Discussion Mode
 

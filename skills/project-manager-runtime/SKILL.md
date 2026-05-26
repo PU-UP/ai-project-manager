@@ -5,9 +5,11 @@ description: Use this repository as an external-Agent personal project manager r
 
 # Project Manager Runtime
 
-Skill version: `0.6.1`
+Skill version: `0.7.0`
 
 Use this skill to operate the repository as a project-manager runtime for an external Agent. The user talks naturally; the Agent reads context, decides whether to discuss or write, and keeps the workspace clean.
+
+If the user asks to optimize, upgrade, repair, review feedback for, or improve the framework itself, switch to `skills/project-manager-upgrader/` instead. If it is unclear whether the user wants to record project progress or improve the system, ask one short clarifying question before writing.
 
 ## Core Rule
 
@@ -48,6 +50,13 @@ These fields help future maintenance aggregate feedback into small skill, prompt
 uv run python -m app.agent_tools export
 ```
 
+For discussion-heavy or review tasks, prefer a smaller context:
+
+```bash
+uv run python -m app.agent_tools export --brief
+uv run python -m app.agent_tools export --group-events
+```
+
 2. Read `app/prompts/project_control_panel.md`.
 
 3. Classify the user request:
@@ -61,6 +70,7 @@ uv run python -m app.agent_tools export
 - New project: use `project_creations` only after explicit user confirmation.
 - Stop a project: prefer `project_deletions` with `mode: "archive"`.
 - Framework friction: optionally record feedback in `.agent-workspace/usage/usage.jsonl`; do not patch tracked files unless asked.
+- Framework upgrade request: use `skills/project-manager-upgrader/` and do not write project database updates unless explicitly requested.
 
 ## Status And Action Protocol
 

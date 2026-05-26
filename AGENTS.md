@@ -10,12 +10,27 @@
 skills/project-manager-runtime/
 ```
 
+处理本框架自身的反馈复盘、系统升级、技能/Prompt/Schema/CLI/API/UI/日志/文档优化请求时，使用：
+
+```text
+skills/project-manager-upgrader/
+```
+
+如果用户的表达可能同时指向“记录某个项目进展”和“优化项目经理框架”，不要猜测写入；先问一句确认。
+
 日常使用该技能不得产生 Git-tracked 产物。临时 JSON、使用记录和低频反馈写入 `.agent-workspace/`，该目录被忽略。
 
 ## 1. 导出当前项目上下文
 
 ```bash
 uv run python -m app.agent_tools export
+```
+
+当 Agent 只是要讨论、复盘或判断方向，优先使用简版或分组上下文，避免被完整事件流淹没：
+
+```bash
+uv run python -m app.agent_tools export --brief
+uv run python -m app.agent_tools export --group-events
 ```
 
 或（服务已启动）：
@@ -33,6 +48,12 @@ GET http://127.0.0.1:8000/api/context
 它定义项目经理判断规则、输出 JSON 结构、项目创建、更新、记录和归档策略。
 
 ## 3. 判断是讨论还是写入
+
+先判断用户意图：
+
+- 用户描述某个项目的进展、风险、反馈、决策、状态变化：按项目运行时处理。
+- 用户要求“优化/升级/修复/复盘反馈/改进系统/改 skill/prompt/schema/CLI/API/UI/logging/docs”：按框架升级处理，使用 `skills/project-manager-upgrader/`。
+- 用户意图不清：先询问，不要直接 apply，也不要直接改 tracked 文件。
 
 如果用户只是想围绕某个项目讨论、梳理、追问或恢复上下文，默认进入 Project Discussion Mode：
 
@@ -134,3 +155,17 @@ GET http://127.0.0.1:8000/api/events?limit=30
 ## 7. 刷新页面
 
 首页会展示更新后的系统判断、近期项目记录和项目进度表。详情页会展示单个项目的控制动作、风险、约束和事件记录。
+
+## 8. 框架反馈与健康检查
+
+复盘历史 feedback：
+
+```bash
+uv run python -m app.agent_tools feedback-report
+```
+
+检查版本、技能、usage 和 episode 状态：
+
+```bash
+uv run python -m app.agent_tools doctor
+```

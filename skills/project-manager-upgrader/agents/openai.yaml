@@ -1,0 +1,3 @@
+display_name: Project Manager Upgrader
+short_description: Review feedback and upgrade the project-manager framework.
+default_prompt: Review framework feedback and propose or implement a small project-manager-runtime upgrade.

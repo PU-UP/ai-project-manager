@@ -33,6 +33,9 @@ templates.env.globals["status_label"] = lambda s: STATUS_LABELS.get(s, s)
 templates.env.globals["risk_label"] = lambda r: RISK_LABELS.get(r, r)
 templates.env.globals["action_label"] = lambda a: ACTION_LABELS.get(a, a)
 templates.env.globals["event_label"] = lambda e: EVENT_LABELS.get(e, e)
+templates.env.globals["static_version"] = lambda name: int(
+    (APP_DIR / "static" / name).stat().st_mtime
+)
 
 
 def _project_stats(projects: list[dict]) -> dict:

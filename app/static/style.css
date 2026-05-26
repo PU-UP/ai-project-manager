@@ -610,10 +610,6 @@ body {
   content: "↓";
 }
 
-.project-table th.col-score,
-.project-table th.col-risk,
-.project-table th.col-status,
-.project-table th.col-action,
 .project-table th.col-detail {
   text-align: center;
 }
@@ -647,8 +643,8 @@ body {
 .project-tr--archived td:first-child { border-left-color: var(--text-muted); }
 
 .col-name {
-  min-width: 7.5rem;
-  max-width: 10rem;
+  min-width: 11rem;
+  width: 24%;
 }
 
 .table-project-link {
@@ -664,15 +660,13 @@ body {
 
 .col-status,
 .col-risk,
-.col-action,
-.col-score,
-.col-detail {
-  text-align: center;
+.col-score {
+  text-align: left;
   white-space: nowrap;
 }
 
 .col-score .level-bar {
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .col-score--human .level-seg.is-on {
@@ -681,7 +675,21 @@ body {
 }
 
 .col-detail {
+  text-align: center;
+  white-space: nowrap;
   width: 4rem;
+}
+
+.col-status {
+  width: 7.5rem;
+}
+
+.col-risk {
+  width: 5.25rem;
+}
+
+.col-score {
+  width: 8.25rem;
 }
 
 .note-toggle {
@@ -732,8 +740,9 @@ body {
 }
 
 .col-time {
+  width: 11.5rem;
   white-space: nowrap;
-  text-align: right;
+  text-align: left;
 }
 
 .col-time time {

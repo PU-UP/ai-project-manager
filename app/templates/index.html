@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros.html" import level_bar, tag_status, tag_risk, tag_action %}
+{% from "macros.html" import level_bar, tag_status, tag_risk %}
 
 {% block title %}AI项目管家{% endblock %}
 
@@ -124,10 +124,9 @@
           <th class="col-status"><button class="sort-btn" type="button" data-sort-key="status">状态<span class="sort-indicator"></span></button></th>
           <th class="col-score" title="主观价值 1-5"><button class="sort-btn" type="button" data-sort-key="value">价值<span class="sort-indicator"></span></button></th>
           <th class="col-risk"><button class="sort-btn" type="button" data-sort-key="risk">风险<span class="sort-indicator"></span></button></th>
-          <th class="col-score" title="AI 接管 0-5"><button class="sort-btn" type="button" data-sort-key="ai">AI<span class="sort-indicator"></span></button></th>
-          <th class="col-score col-score--human" title="人工介入 0-5"><button class="sort-btn" type="button" data-sort-key="human">介入<span class="sort-indicator"></span></button></th>
-          <th class="col-action"><button class="sort-btn" type="button" data-sort-key="action">动作<span class="sort-indicator"></span></button></th>
-          <th class="col-time"><button class="sort-btn" type="button" data-sort-key="updated">更新<span class="sort-indicator"></span></button></th>
+          <th class="col-score" title="AI 接管 0-5"><button class="sort-btn" type="button" data-sort-key="ai">AI接管<span class="sort-indicator"></span></button></th>
+          <th class="col-score col-score--human" title="人工介入 0-5"><button class="sort-btn" type="button" data-sort-key="human">人工介入<span class="sort-indicator"></span></button></th>
+          <th class="col-time"><button class="sort-btn" type="button" data-sort-key="updated">上次更新时间<span class="sort-indicator"></span></button></th>
           <th class="col-detail">详情</th>
         </tr>
       </thead>
@@ -143,7 +142,6 @@
           data-risk="{{ p.risk_level }}"
           data-ai="{{ p.ai_delegation_level }}"
           data-human="{{ p.human_intervention_level }}"
-          data-action="{{ p.control_action }}"
           data-updated="{{ p.updated_at or '' }}"
         >
           <td class="col-name">
@@ -154,7 +152,6 @@
           <td class="col-risk">{{ tag_risk(p.risk_level) }}</td>
           <td class="col-score">{{ level_bar(p.ai_delegation_level, compact=true) }}</td>
           <td class="col-score col-score--human">{{ level_bar(p.human_intervention_level, compact=true) }}</td>
-          <td class="col-action">{{ tag_action(p.control_action) }}</td>
           <td class="col-time"><time>{{ p.updated_at or '—' }}</time></td>
           <td class="col-detail">
             <button
@@ -166,7 +163,7 @@
           </td>
         </tr>
         <tr class="project-detail-row" data-detail-for="{{ p.id }}" hidden>
-          <td colspan="9">
+          <td colspan="8">
             <div class="project-row-detail">
               <div>
                 <span>动作说明</span>

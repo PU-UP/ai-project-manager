@@ -83,6 +83,14 @@
   renderTimeline();
   applyGlobalLabels();
 
+  const backButton = document.querySelector(".back-btn");
+  if (backButton) {
+    const from = new URLSearchParams(window.location.search).get("from");
+    if (from && from.startsWith("/") && !from.startsWith("//")) {
+      backButton.href = from;
+    }
+  }
+
   const table = document.querySelector("[data-project-table]");
   if (!table) return;
 
@@ -92,7 +100,11 @@
   const filterButtons = Array.from(document.querySelectorAll("[data-status-filter]"));
   const detailButtons = Array.from(document.querySelectorAll("[data-detail-toggle]"));
   const countLabel = document.querySelector("[data-project-count]");
+  const projectLinks = Array.from(document.querySelectorAll(".table-project-link"));
   const activeFilters = new Set();
+  const validStatuses = ["active", "maintain", "observe", "paused", "archived"];
+  const defaultStatuses = validStatuses.filter((status) => status !== "archived");
+  const validSortKeys = ["name", "status", "value", "risk", "ai", "human", "updated"];
 
   const statusRank = {
     active: 1,
@@ -106,29 +118,76 @@
     medium: 2,
     low: 3,
   };
-  const actionRank = {
-    human_intervene: 1,
-    change_metric: 2,
-    seek_feedback: 3,
-    delegate_to_ai: 4,
-    continue: 5,
-    maintain: 6,
-    observe: 7,
-    pause: 8,
-    narrow_scope: 9,
-    archive: 10,
-  };
   let currentSort = { key: "updated", direction: "desc" };
+
+  function readOverviewState() {
+    const params = new URLSearchParams(window.location.search);
+    const statusParam = params.get("status");
+    const sortKey = params.get("sort");
+    const sortDirection = params.get("dir");
+
+    activeFilters.clear();
+    if (statusParam === "all") {
+      // Show every status, including historical archives.
+    } else if (statusParam) {
+      statusParam.split(",")
+        .filter((status) => validStatuses.includes(status))
+        .forEach((status) => activeFilters.add(status));
+      if (activeFilters.size === 0) {
+        defaultStatuses.forEach((status) => activeFilters.add(status));
+      }
+    } else {
+      defaultStatuses.forEach((status) => activeFilters.add(status));
+    }
+
+    currentSort = {
+      key: validSortKeys.includes(sortKey) ? sortKey : "updated",
+      direction: sortDirection === "asc" ? "asc" : "desc",
+    };
+  }
+
+  function updateOverviewUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const sortedFilters = validStatuses.filter((status) => activeFilters.has(status));
+
+    if (activeFilters.size === 0) {
+      params.set("status", "all");
+    } else {
+      params.set("status", sortedFilters.join(","));
+    }
+    params.set("sort", currentSort.key);
+    params.set("dir", currentSort.direction);
+
+    const nextUrl = `${window.location.pathname}?${params.toString()}`;
+    window.history.replaceState(null, "", nextUrl);
+    updateProjectLinks();
+  }
+
+  function updateFilterButtons() {
+    filterButtons.forEach((item) => {
+      const itemFilter = item.dataset.statusFilter;
+      const active = itemFilter === "all"
+        ? activeFilters.size === 0
+        : activeFilters.has(itemFilter);
+      item.classList.toggle("is-active", active);
+      item.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+  }
+
+  function updateProjectLinks() {
+    const from = `${window.location.pathname}${window.location.search}`;
+    projectLinks.forEach((link) => {
+      const url = new URL(link.getAttribute("href"), window.location.origin);
+      url.searchParams.set("from", from);
+      link.href = `${url.pathname}${url.search}`;
+    });
+  }
 
   function applyCompactLabels() {
     rows.forEach((row) => {
       const statusTag = row.querySelector(".tag-status");
-      const actionTag = row.querySelector(".tag-action");
       if (statusTag && statusLabels[row.dataset.status]) {
         statusTag.textContent = statusLabels[row.dataset.status];
-      }
-      if (actionTag && actionLabels[row.dataset.action]) {
-        actionTag.textContent = actionLabels[row.dataset.action];
       }
     });
   }
@@ -136,7 +195,6 @@
   function sortValue(row, key) {
     if (key === "status") return statusRank[row.dataset.status] || 99;
     if (key === "risk") return riskRank[row.dataset.risk] || 99;
-    if (key === "action") return actionRank[row.dataset.action] || 99;
     if (key === "value" || key === "ai" || key === "human") {
       return Number(row.dataset[key] || 0);
     }
@@ -197,7 +255,7 @@
   sortButtons.forEach((button) => {
     button.addEventListener("click", () => {
       const key = button.dataset.sortKey;
-      const defaultDirection = ["name", "status", "risk", "action"].includes(key)
+      const defaultDirection = ["name", "status", "risk"].includes(key)
         ? "asc"
         : "desc";
       currentSort = {
@@ -206,6 +264,7 @@
           ? (defaultDirection === "asc" ? "desc" : "asc")
           : defaultDirection,
       };
+      updateOverviewUrl();
       render();
     });
   });
@@ -221,14 +280,8 @@
         activeFilters.add(filter);
       }
 
-      filterButtons.forEach((item) => {
-        const itemFilter = item.dataset.statusFilter;
-        const active = itemFilter === "all"
-          ? activeFilters.size === 0
-          : activeFilters.has(itemFilter);
-        item.classList.toggle("is-active", active);
-        item.setAttribute("aria-pressed", active ? "true" : "false");
-      });
+      updateFilterButtons();
+      updateOverviewUrl();
       render();
     });
   });
@@ -245,5 +298,8 @@
   });
 
   applyCompactLabels();
+  readOverviewState();
+  updateFilterButtons();
+  updateProjectLinks();
   render();
 })();

@@ -1,30 +1,33 @@
 # AI项目管家（ai-project-manager）
 
-**AI项目管家** 是一个给外部 Agent 使用的个人项目经理框架。
+**AI项目管家** 是一个给外部 Agent 使用的项目上下文运行时。
 
-一句话：用户用自然语言和 Agent 交流，Agent 通过本工程读取、写入、维护项目记录，并在网页上展示近期项目局面、系统判断和下一步控制动作。
+一句话：用户用自然语言提到已有项目时，Agent 先通过本工程恢复项目上下文，接上讨论或工作；只有形成值得长期保存的结论、或用户明确要求记录时，才写入项目记录。网页用于展示近期项目局面、系统判断和下一步控制动作。
 
 ## 目标
 
-帮助外部 Agent 长期维护你的项目记忆：
+帮助外部 Agent 不需要你每次重讲项目背景，就能继续参与项目讨论和工作：
 
-- 读取当前所有项目状态
-- 记录近期进展、反馈、风险、想法、决策和阻塞
+- 读取当前所有项目状态、项目记忆和近期事件
+- 通过 `discussion_brief`、`risk_note`、`project_constraint` 和最新系统判断恢复上下文
+- 围绕已有项目参与讨论、复盘、分析和方向判断
+- 在你不知道做什么时，基于上下文给出建议
+- 仅在必要时记录近期进展、反馈、风险、想法、决策和阻塞
 - 更新项目价值、风险、AI 接管程度、人工介入程度和控制动作
 - 重命名项目，更新项目约束
-- 在你不知道做什么时，基于记录给出方向判断
 - 将项目局面可视化给用户查看
 
 默认工作流：
 
-1. 用户对 Agent 自然语言描述项目进展或困惑。
-2. Agent 导出项目上下文。
-3. Agent 阅读系统 prompt。
-4. Agent 产出严格 JSON。
-5. Agent 通过 CLI 或 API 写入本工程。
-6. 用户刷新网页查看系统判断、近期记录和项目进度。
+1. 用户用自然语言提到已有项目、项目困惑、进展或判断。
+2. Agent 导出并读取项目上下文，优先关注 project memory、`discussion_brief`、`recent_events`、`risk_note`、`project_constraint` 和 `latest_system_judgement`。
+3. Agent 阅读系统 prompt，并判断本轮属于讨论、工作还是记录。
+4. Context / Discussion Mode：用户想聊项目、继续讨论、复盘、思考、问建议时，默认只读上下文并自然语言回答。
+5. Work Mode：用户希望 Agent 在某个项目语境下分析、整理、复盘、提出建议时，仍默认只读，除非用户要求保存结果。
+6. Record Mode：只有用户明确说“记录/保存/更新/写入/归档/创建”，或确认 Agent 建议写入时，才产出严格 JSON。
+7. 进入 Record Mode 后，Agent 通过 CLI 或 API apply；用户刷新网页查看更新后的系统判断、近期记录和项目进度。
 
-网页用于查看项目局面；项目维护由 Agent 完成。
+网页用于查看项目局面；项目上下文恢复、讨论参与和必要记录由 Agent 完成。记录不是默认主流程，它只是讨论形成稳定结论后的保存动作。
 
 ## 当前能力
 
@@ -34,7 +37,7 @@
 - 系统级判断展示
 - 近期项目事件流
 - Agent 通过 CLI / API 导出上下文
-- Agent 通过 JSON 创建、重命名、更新、记录、调整约束、归档或删除项目
+- Agent 通过 JSON 创建、重命名、更新、记录、调整约束、维护长期记忆、归档或删除项目
 - SQLite 存储
 - `logs/interactions.jsonl` 记录 Agent 交互
 - 可选内置 LLM 代码保留，但默认不作为核心入口
@@ -47,7 +50,7 @@
 skills/project-manager-runtime/
 ```
 
-它约定了 Agent 如何读取上下文、判断是否写入、应用 JSON 更新、记录低频使用反馈，并保证日常使用不会产生 Git 记录。使用记录写入 `.agent-workspace/usage/usage.jsonl`，该目录被 Git 忽略。
+它约定了 Agent 如何先恢复项目上下文、区分讨论/工作/记录模式、判断是否写入、应用 JSON 更新、记录低频使用反馈，并保证日常使用不会产生 Git 记录。使用记录写入 `.agent-workspace/usage/usage.jsonl`，该目录被 Git 忽略。
 
 另有一个框架升级技能：
 
@@ -59,12 +62,13 @@ skills/project-manager-upgrader/
 
 ## Agent 协议
 
-Agent 的输出 JSON 顶层支持：
+只有进入 Record Mode 时，Agent 才生成 apply JSON。JSON 顶层支持：
 
 - `project_creations`：用户明确确认后创建新项目
 - `project_renames`：重命名已有项目
 - `project_updates`：更新项目当前状态和控制判断
 - `project_constraint_updates`：更新已有项目的范围约束
+- `project_memory_updates`：维护项目长期记忆和讨论摘要
 - `project_events`：追加项目事件，形成近期进展记录
 - `project_deletions`：归档或删除项目，默认归档
 - `system_judgement`：本轮系统级判断

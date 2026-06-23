@@ -23,8 +23,25 @@ def _single_event_payload(project_name: str = "已知项目") -> dict:
             {
                 "project_name": project_name,
                 "event_type": "note",
-                "summary": "用户确认的决定：暂停推进",
+                "summary": "用户确认的讨论记录",
+            }
+        ]
+    }
+
+
+def _decision_event_payload(project_name: str = "已知项目") -> dict:
+    return {
+        "project_events": [
+            {
+                "project_name": project_name,
+                "event_type": "decision",
+                "summary": "用户确认暂停推进",
                 "decision": "维持暂停",
+                "decision_provenance": {
+                    "source_type": "user",
+                    "confirmation": "confirmed",
+                    "source_ref": "用户原话",
+                },
             }
         ]
     }
@@ -191,6 +208,101 @@ def test_event_only_payload_with_judgement_parses_today(temp_db):
         conn.close()
 
     assert "已知项目" in result["events"]
+
+
+def test_record_guard_rejects_decision_without_provenance():
+    payload = {
+        "project_events": [
+            {
+                "project_name": "已知项目",
+                "event_type": "decision",
+                "summary": "决定暂停",
+                "decision": "暂停",
+            }
+        ]
+    }
+    violations = validate_record_payload(payload)
+    assert any(v.code == "decision_without_provenance" for v in violations)
+
+
+def test_schema_rejects_unconfirmed_validated_facts():
+    raw = json.dumps(
+        {
+            "project_memory_updates": [
+                {
+                    "project_name": "已知项目",
+                    "validated_facts": ["未确认事实"],
+                    "_provenance": [
+                        {
+                            "source_type": "document",
+                            "confirmation": "unconfirmed",
+                        }
+                    ],
+                }
+            ]
+        },
+        ensure_ascii=False,
+    )
+    parsed, err = parse_control_response(raw)
+    assert parsed is None
+    assert err is not None
+    assert "unconfirmed" in err
+
+
+def test_confirmed_facts_with_provenance_apply(temp_db):
+    raw = json.dumps(
+        {
+            "project_memory_updates": [
+                {
+                    "project_name": "已知项目",
+                    "validated_facts": ["用户确认暂停 Hermes"],
+                    "_provenance": [
+                        {
+                            "source_type": "user",
+                            "confirmation": "confirmed",
+                            "source_ref": "用户原话",
+                        }
+                    ],
+                }
+            ]
+        },
+        ensure_ascii=False,
+    )
+    from app.services.apply_control import apply_raw_json
+
+    result = apply_raw_json(raw, user_input="测试", source="test")
+    assert result["ok"] is True
+
+    conn = get_connection()
+    try:
+        projects = list_projects(conn)
+        facts = projects[0]["validated_facts"]
+        assert len(facts) == 1
+        assert facts[0]["text"] == "用户确认暂停 Hermes"
+        assert facts[0]["source_type"] == "user"
+        assert facts[0]["confirmation"] == "confirmed"
+        assert facts[0]["recorded_at"]
+    finally:
+        conn.close()
+
+
+def test_apply_rejects_validated_facts_without_provenance(temp_db):
+    raw = json.dumps(
+        {
+            "project_memory_updates": [
+                {
+                    "project_name": "已知项目",
+                    "validated_facts": ["缺少 provenance"],
+                }
+            ]
+        },
+        ensure_ascii=False,
+    )
+    from app.services.apply_control import apply_raw_json
+
+    result = apply_raw_json(raw, user_input="测试", source="test")
+    assert result["ok"] is False
+    assert "contract_violations" in result or "provenance" in result["error"].lower()
 
 
 def test_apply_returns_neutral_change_summary(temp_db):

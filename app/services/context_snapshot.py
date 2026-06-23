@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 
 from app.datetime_util import BEIJING, _parse_timestamp
+from app.provenance import fact_text
 
 STALE_DAYS = 30
 RECENT_DAYS = 14
@@ -31,7 +32,8 @@ def _missing_memory_fields(project: dict) -> list[str]:
             missing.append(field)
     facts = project.get("validated_facts") or []
     questions = project.get("open_questions") or []
-    if not facts and not questions:
+    has_facts = any(fact_text(f) for f in facts)
+    if not has_facts and not questions:
         missing.append("validated_facts_or_open_questions")
     return missing
 
@@ -93,11 +95,16 @@ def build_portfolio_snapshot(projects: list[dict]) -> dict:
                 )
 
         questions = project.get("open_questions") or []
-        if questions and status != "archived":
+        unconfirmed_facts = [
+            f for f in (project.get("validated_facts") or [])
+            if isinstance(f, dict) and f.get("confirmation") == "unconfirmed"
+        ]
+        if (questions or unconfirmed_facts) and status != "archived":
             pending_confirmation.append(
                 {
                     **entry,
                     "open_questions_count": len(questions),
+                    "unconfirmed_facts_count": len(unconfirmed_facts),
                 }
             )
 

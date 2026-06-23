@@ -1,6 +1,6 @@
 # Roadmap：将 AI 项目管家收敛为纯项目经理
 
-> 状态：执行中（Step 0–5 已完成）
+> 状态：执行中（Step 0–7 已完成）
 >
 > 创建日期：2026-06-23
 >
@@ -352,8 +352,8 @@ uv run python -m compileall app
 
 ### 前置条件
 
-- [ ] Step 5 完成。
-- [ ] 数据库备份仍可用。
+- [x] Step 5 完成。
+- [x] 数据库备份仍可用。
 
 ### 主要文件
 
@@ -365,21 +365,21 @@ uv run python -m compileall app
 
 ### Todo
 
-- [ ] 设计最小 provenance 字段：`source_type`、`source_ref`、`confirmation`、`recorded_at`。
-- [ ] `source_type` 至少支持 `user | document | import | legacy`。
-- [ ] `confirmation` 至少支持 `confirmed | unconfirmed | legacy`。
-- [ ] 新事实和决定默认不能省略来源。
-- [ ] Agent 整理出的未确认内容只能进入 open questions 或 unconfirmed。
-- [ ] 历史数据迁移为 legacy，不伪装成用户确认。
-- [ ] context export 展示来源和确认状态。
-- [ ] UI 对 confirmed/unconfirmed/legacy 做清晰、克制的区分。
-- [ ] 添加迁移幂等测试：重复 `init_db()` 不破坏数据。
+- [x] 设计最小 provenance 字段：`source_type`、`source_ref`、`confirmation`、`recorded_at`。
+- [x] `source_type` 至少支持 `user | document | import | legacy`。
+- [x] `confirmation` 至少支持 `confirmed | unconfirmed | legacy`。
+- [x] 新事实和决定默认不能省略来源。
+- [x] Agent 整理出的未确认内容只能进入 open questions 或 unconfirmed。
+- [x] 历史数据迁移为 legacy，不伪装成用户确认。
+- [x] context export 展示来源和确认状态。
+- [x] UI 对 confirmed/unconfirmed/legacy 做清晰、克制的区分。
+- [x] 添加迁移幂等测试：重复 `init_db()` 不破坏数据。
 
 ### 完成定义
 
-- [ ] 任意新增长期事实可以回答“来自哪里、是否确认”。
-- [ ] 未确认内容无法通过 schema 进入 confirmed decisions/facts。
-- [ ] 旧数据完整可读。
+- [x] 任意新增长期事实可以回答“来自哪里、是否确认”。
+- [x] 未确认内容无法通过 schema 进入 confirmed decisions/facts。
+- [x] 旧数据完整可读。
 
 ### 验收命令
 
@@ -403,7 +403,7 @@ uv run python -m app.agent_tools export --brief
 
 ### 前置条件
 
-- [ ] Step 6 完成，provenance 可用。
+- [x] Step 6 完成，provenance 可用。
 
 ### 数据范围
 
@@ -424,23 +424,23 @@ uv run python -m app.agent_tools export --brief
 
 ### Todo
 
-- [ ] 新增文档表和幂等迁移。
-- [ ] 新增 typed schema。
-- [ ] 新增 `document_add`。
-- [ ] 新增 `document_update_metadata`。
-- [ ] 新增 `document_link`。
-- [ ] 新增 `document_archive`。
-- [ ] 明确不提供“自主重写文档内容”的 runtime operation。
-- [ ] context export 包含项目相关文档引用。
-- [ ] 项目详情页展示文档标题、来源、状态、版本和事实性摘要。
-- [ ] 对不存在的本地路径或失效引用只标记，不自动删除。
-- [ ] 添加 CRUD、关联、归档和旧数据库迁移测试。
+- [x] 新增文档表和幂等迁移。
+- [x] 新增 typed schema。
+- [x] 新增 `document_add`。
+- [x] 新增 `document_update_metadata`。
+- [x] 新增 `document_link`。
+- [x] 新增 `document_archive`。
+- [x] 明确不提供“自主重写文档内容”的 runtime operation。
+- [x] context export 包含项目相关文档引用。
+- [x] 项目详情页展示文档标题、来源、状态、版本和事实性摘要。
+- [x] 对不存在的本地路径或失效引用只标记，不自动删除。
+- [x] 添加 CRUD、关联、归档和旧数据库迁移测试。
 
 ### 完成定义
 
-- [ ] 可以登记、关联、更新和归档文档。
-- [ ] 文档摘要不包含改进建议或路线决策。
-- [ ] Handoff context packet 能携带相关文档引用。
+- [x] 可以登记、关联、更新和归档文档。
+- [x] 文档摘要不包含改进建议或路线决策。
+- [x] Handoff context packet 能携带相关文档引用。
 
 ### 验收命令
 
@@ -578,6 +578,7 @@ Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 - [x] **Step 4 验收备注：** `SKILL.md` 中 `prioritization` 仅出现在禁止句「Do not perform… prioritization」中，非授权表达。
 - [x] **Step 2 已解决（Step 3）：** `system_judgement` 已 optional；单事件无 judgement 可 apply。
 - [x] **Step 2 契约已锁、实现待接：** `record_guard` 已校验 `_provenance`，但 apply 路径尚未强制；Step 6 落地 schema 后接入。
+- [x] **Step 6 已解决：** `record_guard` 已接入 `apply_raw_json`；`validated_facts` 结构化存储；历史字符串事实迁移为 `legacy`。
 
 ## 执行记录
 
@@ -608,8 +609,9 @@ Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 | 3    | 完成  | 2026-06-23 | `d87dcad` | 17 passed | optional judgement、`change_summary`、`confirm_explicit` |
 | 4    | 完成  | 2026-06-23 | `e6dc92f` | 17 passed；rg 无授权命中 | v0.9.0；四入口链接 canonical contract |
 | 5    | 完成  | 2026-06-23 | `41f1b7f` | 25 passed | context_snapshot + UI smoke |
-| 6    | 待执行 |            |        |      |                                               |
-| 7    | 待执行 |            |        |      |                                               |
+| 5+   | 完成  | 2026-06-23 | `b1736eb` | — | 组合快照卡片排版修补 |
+| 6    | 完成  | 2026-06-23 |        | 31 passed | provenance schema/迁移/record_guard/UI/export |
+| 7    | 完成  | 2026-06-23 |        | 41 passed | project_documents + document_* apply/export/UI |
 | 8    | 待执行 |            |        |      |                                               |
 | 9    | 待执行 |            |        |      |                                               |
 
@@ -618,9 +620,9 @@ Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 
 - [x] Context、Record、Handoff 三模式均有契约测试。
 - [x] 项目管家不会在独立项目中进行深度思考、内容迭代或代替决策。
-- [ ] 项目上下文中的事实和决定都有来源与确认状态。
-- [ ] 文档整理是一等能力，且不会扩张为自主内容创作。
+- [x] 项目上下文中的事实和决定都有来源与确认状态。
+- [x] 文档整理是一等能力，且不会扩张为自主内容创作。
 - [x] 首页展示确定性上下文健康信息，不展示 Agent 控制建议。
 - [x] 普通写入无需 `system_judgement`。
-- [ ] 旧项目和历史记录仍可读取。
+- [x] 旧项目和历史记录仍可读取。
 - [ ] 统一 verify、全量测试和 UI smoke 全部通过。

@@ -3,6 +3,8 @@
 import json
 from app.datetime_util import now_beijing
 from app.models import PROJECT_ALIASES
+from app.provenance import serialize_validated_facts
+from app.services.document_index import apply_document_operations
 from app.schemas import (
     ControlResponse,
     ProjectConstraintUpdate,
@@ -165,6 +167,12 @@ def update_project_memory(
         val = getattr(item, field, None)
         if val is None:
             continue
+        if field == "validated_facts":
+            resolved = item.resolved_validated_facts(now)
+            if resolved is not None:
+                sets.append(f"{field} = ?")
+                values.append(serialize_validated_facts(resolved))
+            continue
         sets.append(f"{field} = ?")
         values.append(json.dumps(val, ensure_ascii=False))
 
@@ -216,12 +224,17 @@ def append_project_event(
     project: dict,
     now: str,
 ) -> str:
+    decision_prov = ""
+    if item.decision_provenance is not None:
+        prov = item.decision_provenance.model_dump()
+        prov["recorded_at"] = now
+        decision_prov = json.dumps(prov, ensure_ascii=False)
     conn.execute(
         """
         INSERT INTO project_events (
             project_id, project_name, event_type, summary, evidence,
-            decision, next_action, happened_at, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            decision, decision_provenance, next_action, happened_at, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             project["id"],
@@ -230,6 +243,7 @@ def append_project_event(
             item.summary,
             item.evidence or "",
             item.decision or "",
+            decision_prov,
             item.next_action or "",
             item.happened_at,
             now,
@@ -382,7 +396,12 @@ def apply_updates(
                     for field in MEMORY_JSON_FIELDS:
                         val = getattr(item, field, None)
                         if val is not None:
-                            p[field] = val
+                            if field == "validated_facts":
+                                resolved = item.resolved_validated_facts(now)
+                                if resolved is not None:
+                                    p[field] = resolved
+                            else:
+                                p[field] = val
                     p["updated_at"] = now
                     break
         except Exception as e:
@@ -418,6 +437,18 @@ def apply_updates(
         except Exception as e:
             invalid.append({"project": item.project_name, "error": str(e)})
 
+    doc_result = apply_document_operations(
+        conn,
+        response.document_adds,
+        response.document_metadata_updates,
+        response.document_links,
+        response.document_archives,
+        projects,
+        renamed_lookup,
+    )
+    skipped.extend(doc_result["skipped"])
+    invalid.extend(doc_result["invalid"])
+
     conn.commit()
     return {
         "created": created,
@@ -428,6 +459,10 @@ def apply_updates(
         "archived": archived,
         "deleted": deleted,
         "events": events,
+        "documents_added": doc_result["documents_added"],
+        "documents_metadata_updated": doc_result["documents_metadata_updated"],
+        "documents_linked": doc_result["documents_linked"],
+        "documents_archived": doc_result["documents_archived"],
         "skipped": skipped,
         "invalid": invalid,
     }
@@ -450,7 +485,7 @@ def updates_summary(response: ControlResponse) -> str:
                 for u in response.project_constraint_updates
             ],
             "project_memory_updates": [
-                u.model_dump(exclude_none=True)
+                u.model_dump(exclude_none=True, by_alias=True)
                 for u in response.project_memory_updates
             ],
             "project_events": [
@@ -458,6 +493,19 @@ def updates_summary(response: ControlResponse) -> str:
             ],
             "project_deletions": [
                 u.model_dump(exclude_none=True) for u in response.project_deletions
+            ],
+            "document_adds": [
+                u.model_dump(exclude_none=True) for u in response.document_adds
+            ],
+            "document_metadata_updates": [
+                u.model_dump(exclude_none=True)
+                for u in response.document_metadata_updates
+            ],
+            "document_links": [
+                u.model_dump(exclude_none=True) for u in response.document_links
+            ],
+            "document_archives": [
+                u.model_dump(exclude_none=True) for u in response.document_archives
             ],
         },
         ensure_ascii=False,
@@ -476,6 +524,10 @@ def build_change_summary(result: dict) -> str:
         ("archived", "归档"),
         ("deleted", "删除"),
         ("events", "事件"),
+        ("documents_added", "文档登记"),
+        ("documents_metadata_updated", "文档元数据"),
+        ("documents_linked", "文档关联"),
+        ("documents_archived", "文档归档"),
     )
     for key, label in labels:
         items = result.get(key) or []

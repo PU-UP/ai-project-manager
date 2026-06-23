@@ -18,3 +18,14 @@
 {% macro tag_action(action) %}
 <span class="tag tag-action" data-action-value="{{ action }}">{{ action_label(action) }}</span>
 {% endmacro %}
+
+{% macro tag_provenance(source_type, confirmation) %}
+<span class="provenance-tags">
+  <span class="tag tag-provenance tag-provenance-source tag-provenance-source-{{ source_type }}">{{ source_type_label(source_type) }}</span>
+  <span class="tag tag-provenance tag-provenance-confirm tag-provenance-confirm-{{ confirmation }}">{{ confirmation_label(confirmation) }}</span>
+</span>
+{% endmacro %}
+
+{% macro tag_document_status(status) %}
+<span class="tag tag-doc-status tag-doc-status-{{ status }}">{{ document_status_label(status) }}</span>
+{% endmacro %}

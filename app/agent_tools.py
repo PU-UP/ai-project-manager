@@ -65,19 +65,67 @@ def _short_text(value: str | None, limit: int = 160) -> str | None:
     return value if len(value) <= limit else value[: limit - 1] + "…"
 
 
+def _short_fact_list(items: list, limit: int = 3) -> list:
+    if not isinstance(items, list):
+        return []
+    out = []
+    for item in items[:limit]:
+        if isinstance(item, dict):
+            out.append(
+                _without_empty(
+                    {
+                        "text": _short_text(item.get("text"), 120),
+                        "source_type": item.get("source_type"),
+                        "confirmation": item.get("confirmation"),
+                        "source_ref": _short_text(item.get("source_ref"), 80),
+                    }
+                )
+            )
+        elif isinstance(item, str):
+            out.append({"text": _short_text(item, 120), "confirmation": "legacy"})
+    return out
+
+
 def _short_list(items: list, limit: int = 3) -> list:
     return items[:limit] if isinstance(items, list) else []
 
 
 def _brief_event(event: dict) -> dict:
+    prov = event.get("decision_provenance")
+    prov_brief = None
+    if isinstance(prov, dict):
+        prov_brief = _without_empty(
+            {
+                "source_type": prov.get("source_type"),
+                "confirmation": prov.get("confirmation"),
+                "source_ref": _short_text(prov.get("source_ref"), 80),
+            }
+        )
     return _without_empty(
         {
             "project_name": event.get("project_name"),
             "event_type": event.get("event_type"),
             "summary": _short_text(event.get("summary"), 140),
             "decision": _short_text(event.get("decision"), 140),
+            "decision_provenance": prov_brief,
             "next_action": _short_text(event.get("next_action"), 140),
             "display_at": event.get("display_at"),
+        }
+    )
+
+
+def _brief_document(doc: dict) -> dict:
+    return _without_empty(
+        {
+            "id": doc.get("id"),
+            "title": doc.get("title"),
+            "document_type": doc.get("document_type"),
+            "source_uri": _short_text(doc.get("source_uri"), 120),
+            "source_kind": doc.get("source_kind"),
+            "summary": _short_text(doc.get("summary"), 160),
+            "status": doc.get("status"),
+            "version_or_date": doc.get("version_or_date"),
+            "link_refs": doc.get("link_refs"),
         }
     )
 
@@ -86,8 +134,11 @@ def _brief_context(ctx: dict, group_events: bool = False) -> dict:
     recent_events = ctx.get("recent_events", [])
     projects = []
     events_by_project: dict[str, list[dict]] = defaultdict(list)
+    docs_by_project: dict[str, list[dict]] = defaultdict(list)
     for event in recent_events:
         events_by_project[event.get("project_name", "")].append(event)
+    for doc in ctx.get("project_documents", []):
+        docs_by_project[doc.get("project_name", "")].append(doc)
 
     for project in ctx.get("projects", []):
         if project.get("status") == "archived":
@@ -99,7 +150,7 @@ def _brief_context(ctx: dict, group_events: bool = False) -> dict:
                 "progress_percent": project.get("progress_percent"),
                 "progress_note": _short_text(project.get("progress_note")),
                 "key_judgements": _short_list(project.get("key_judgements", [])),
-                "validated_facts": _short_list(project.get("validated_facts", [])),
+                "validated_facts": _short_fact_list(project.get("validated_facts", [])),
                 "open_questions": _short_list(project.get("open_questions", [])),
                 "discussion_brief": _short_text(project.get("discussion_brief")),
             }
@@ -123,6 +174,10 @@ def _brief_context(ctx: dict, group_events: bool = False) -> dict:
                     _brief_event(event)
                     for event in events_by_project.get(project.get("name"), [])[:3]
                 ],
+                "documents": [
+                    _brief_document(doc)
+                    for doc in docs_by_project.get(project.get("name"), [])[:5]
+                ],
             }
         )
         projects.append(item)
@@ -132,6 +187,9 @@ def _brief_context(ctx: dict, group_events: bool = False) -> dict:
         "projects": projects,
         "archived_project_names": [
             p.get("name") for p in ctx.get("projects", []) if p.get("status") == "archived"
+        ],
+        "project_documents": [
+            _brief_document(doc) for doc in ctx.get("project_documents", [])[:20]
         ],
         "latest_system_judgement": ctx.get("latest_system_judgement"),
         "agent_operations": ctx.get("agent_operations"),

@@ -40,6 +40,7 @@ def test_project_detail_page_loads(client):
     text = response.text
     assert "项目简报" in text
     assert "档案备注" in text
+    assert "相关文档" in text
     assert "当前控制" not in text
 
 

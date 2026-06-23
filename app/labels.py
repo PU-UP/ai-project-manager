@@ -37,6 +37,13 @@ EVENT_LABELS = {
     "note": "记录",
 }
 
+DOCUMENT_STATUS_LABELS = {
+    "current": "当前",
+    "stale": "可能过期",
+    "superseded": "已归档",
+    "unknown": "引用失效",
+}
+
 JUDGEMENT_SECTIONS = {
     "real_progress": ("真推进", "positive"),
     "pseudo_progress_risk": ("假性推进", "warning"),

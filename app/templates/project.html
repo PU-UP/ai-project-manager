@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros.html" import tag_status %}
+{% from "macros.html" import tag_status, tag_provenance, tag_document_status %}
 
 {% block title %}{{ project.name }} — AI项目管家{% endblock %}
 
@@ -68,9 +68,12 @@
       <div class="memory-list-block">
         <h3>已验证事实</h3>
         {% if project.validated_facts %}
-        <ul>
+        <ul class="provenance-list">
           {% for item in project.validated_facts %}
-          <li>{{ item }}</li>
+          <li class="provenance-item provenance-item--{{ item.confirmation }}">
+            <span class="provenance-text">{{ item.text }}</span>
+            {{ tag_provenance(item.source_type, item.confirmation) }}
+          </li>
           {% endfor %}
         </ul>
         {% else %}
@@ -103,6 +106,34 @@
   </div>
 
   <div class="detail-card detail-card--wide">
+    <h2>相关文档</h2>
+    {% if documents %}
+    <ul class="document-list">
+      {% for doc in documents %}
+      <li class="document-item document-item--{{ doc.status }}">
+        <div class="document-head">
+          <span class="document-title">{{ doc.title }}</span>
+          {{ tag_document_status(doc.status) }}
+        </div>
+        {% if doc.summary %}
+        <p class="document-summary">{{ doc.summary }}</p>
+        {% endif %}
+        <div class="document-meta">
+          {% if doc.document_type %}<span>类型：{{ doc.document_type }}</span>{% endif %}
+          {% if doc.source_kind %}<span>来源：{{ doc.source_kind }}</span>{% endif %}
+          {% if doc.source_uri %}<span class="document-uri">URI：{{ doc.source_uri }}</span>{% endif %}
+          {% if doc.version_or_date %}<span>版本/日期：{{ doc.version_or_date }}</span>{% endif %}
+          {% if doc.link_refs %}<span>关联：{{ doc.link_refs | join('；') }}</span>{% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="empty-inline">暂无登记文档</p>
+    {% endif %}
+  </div>
+
+  <div class="detail-card detail-card--wide">
     <h2>项目记录</h2>
     {% if events %}
     <div class="timeline timeline--detail">
@@ -118,7 +149,7 @@
           {% if e.evidence or e.decision or e.next_action %}
           <div class="timeline-meta">
             {% if e.evidence %}<span>依据：{{ e.evidence }}</span>{% endif %}
-            {% if e.decision %}<span>记录：{{ e.decision }}</span>{% endif %}
+            {% if e.decision %}<span>记录：{{ e.decision }}{% if e.decision_provenance %} {{ tag_provenance(e.decision_provenance.source_type, e.decision_provenance.confirmation) }}{% endif %}</span>{% endif %}
             {% if e.next_action %}<span>待办：{{ e.next_action }}</span>{% endif %}
           </div>
           {% endif %}

@@ -101,9 +101,34 @@ CREATE TABLE IF NOT EXISTS project_events (
     summary TEXT NOT NULL,
     evidence TEXT NOT NULL DEFAULT '',
     decision TEXT NOT NULL DEFAULT '',
+    decision_provenance TEXT NOT NULL DEFAULT '',
     next_action TEXT NOT NULL DEFAULT '',
     happened_at TEXT,
     created_at TEXT NOT NULL,
     FOREIGN KEY(project_id) REFERENCES projects(id)
+);
+"""
+
+EVENT_PROVENANCE_COLUMNS = {
+    "decision_provenance": "TEXT NOT NULL DEFAULT ''",
+}
+
+DOCUMENT_STATUSES = ("current", "stale", "superseded", "unknown")
+
+CREATE_PROJECT_DOCUMENTS_TABLE = """
+CREATE TABLE IF NOT EXISTS project_documents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id INTEGER NOT NULL,
+    title TEXT NOT NULL,
+    document_type TEXT NOT NULL DEFAULT '',
+    source_uri TEXT NOT NULL DEFAULT '',
+    source_kind TEXT NOT NULL DEFAULT '',
+    summary TEXT NOT NULL DEFAULT '',
+    tags TEXT NOT NULL DEFAULT '[]',
+    version_or_date TEXT NOT NULL DEFAULT '',
+    status TEXT NOT NULL DEFAULT 'current',
+    added_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY(project_id) REFERENCES projects(id) ON DELETE CASCADE
 );
 """

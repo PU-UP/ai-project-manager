@@ -15,7 +15,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.db import ROOT_DIR, get_connection, init_db
-from app.labels import EVENT_LABELS, STATUS_LABELS
+from app.labels import DOCUMENT_STATUS_LABELS, EVENT_LABELS, STATUS_LABELS
+from app.provenance import confirmation_label, source_type_label
 from app.services.apply_control import apply_raw_json, build_context
 from app.services.context_snapshot import build_portfolio_snapshot
 from app.services.project_updater import list_projects, list_recent_events
@@ -26,6 +27,9 @@ APP_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(APP_DIR / "templates"))
 templates.env.globals["status_label"] = lambda s: STATUS_LABELS.get(s, s)
 templates.env.globals["event_label"] = lambda e: EVENT_LABELS.get(e, e)
+templates.env.globals["confirmation_label"] = confirmation_label
+templates.env.globals["source_type_label"] = source_type_label
+templates.env.globals["document_status_label"] = lambda s: DOCUMENT_STATUS_LABELS.get(s, s)
 templates.env.globals["static_version"] = lambda name: int(
     (APP_DIR / "static" / name).stat().st_mtime
 )
@@ -103,6 +107,9 @@ async def project_detail(request: Request, project_id: int):
             "SELECT * FROM projects WHERE id = ?", (project_id,)
         ).fetchone()
         events = list_recent_events(conn, limit=20, project_id=project_id)
+        from app.services.document_index import list_documents
+
+        documents = list_documents(conn, project_id=project_id)
     finally:
         conn.close()
     if not row:
@@ -111,7 +118,7 @@ async def project_detail(request: Request, project_id: int):
 
     project = row_to_project_dict(row)
     return templates.TemplateResponse(
-        request, "project.html", {"project": project, "events": events}
+        request, "project.html", {"project": project, "events": events, "documents": documents}
     )
 
 
@@ -163,6 +170,10 @@ async def api_apply(request: Request):
             "project_memory_updates",
             "project_events",
             "project_deletions",
+            "document_adds",
+            "document_metadata_updates",
+            "document_links",
+            "document_archives",
             "system_judgement",
         )
     ):

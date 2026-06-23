@@ -33,7 +33,7 @@ def test_snapshot_detects_stale_and_recent():
             "origin": "x",
             "current_goal": "y",
             "discussion_brief": "z",
-            "validated_facts": ["fact"],
+            "validated_facts": [{"text": "fact", "confirmation": "legacy", "source_type": "legacy"}],
             "open_questions": [],
         },
         {
@@ -44,7 +44,7 @@ def test_snapshot_detects_stale_and_recent():
             "origin": "x",
             "current_goal": "y",
             "discussion_brief": "z",
-            "validated_facts": ["fact"],
+            "validated_facts": [{"text": "fact", "confirmation": "legacy", "source_type": "legacy"}],
             "open_questions": [],
         },
     ]
@@ -72,7 +72,7 @@ def test_snapshot_missing_memory_and_open_questions():
             "origin": "o",
             "current_goal": "g",
             "discussion_brief": "b",
-            "validated_facts": ["f"],
+            "validated_facts": [{"text": "f", "confirmation": "legacy", "source_type": "legacy"}],
             "open_questions": [],
         },
     ]

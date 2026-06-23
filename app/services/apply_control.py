@@ -15,11 +15,13 @@ def build_context() -> dict:
     init_db()
     conn = get_connection()
     try:
+        from app.services.document_index import list_documents
         from app.services.interaction_log import get_latest_judgement
         from app.services.project_updater import list_projects, list_recent_events
 
         projects = list_projects(conn)
         recent_events = list_recent_events(conn, limit=30)
+        project_documents = list_documents(conn)
         latest_judgement = get_latest_judgement(conn)
     finally:
         conn.close()
@@ -35,6 +37,7 @@ def build_context() -> dict:
             },
         },
         "projects": projects,
+        "project_documents": project_documents,
         "recent_events": recent_events,
         "latest_system_judgement": latest_judgement,
         "agent_operations": {
@@ -48,6 +51,10 @@ def build_context() -> dict:
             "project_memory_updates": "用户确认后的长期记忆：origin、current_goal、validated_facts、open_questions、discussion_brief。",
             "project_events": "追加进展、反馈、决策、风险、想法或阻塞事件。",
             "project_deletions": "默认归档；彻底删除需 mode=delete 且 confirm_explicit=true。",
+            "document_adds": "登记文档元数据与事实性摘要；不自主重写正文。",
+            "document_metadata_updates": "更新文档标题、来源、标签、版本或状态。",
+            "document_links": "关联文档与项目内引用；校验 source_uri，失效路径标 unknown。",
+            "document_archives": "将文档标为 superseded；不自动删除记录。",
         },
         "prompt_path": "app/prompts/project_control_panel.md",
         "prompt_hint": "完整边界见 docs/product-boundary.md；写入规则见 docs/record-contract.md。讨论时自然语言回答；Record Mode 才输出严格 JSON。",
@@ -78,6 +85,36 @@ def apply_raw_json(
             "skipped": [],
         }
 
+    from app.contracts.record_guard import validate_record_payload
+    from app.services.control_parser import strip_markdown_json
+
+    try:
+        payload_data = json.loads(strip_markdown_json(raw))
+    except json.JSONDecodeError:
+        payload_data = parsed.model_dump(exclude_none=True, by_alias=True)
+    violations = validate_record_payload(payload_data)
+    if violations:
+        violation_msg = "; ".join(v.message for v in violations)
+        save_log(user_input, raw, None, source=source)
+        append_jsonl(user_input, raw, None, [], source=source)
+        append_episode(
+            user_input=user_input,
+            raw_output=raw,
+            source=source,
+            ok=False,
+            error=violation_msg,
+        )
+        return {
+            "ok": False,
+            "error": violation_msg,
+            "contract_violations": [
+                {"code": v.code, "message": v.message, "fix_hint": v.fix_hint}
+                for v in violations
+            ],
+            "updated": [],
+            "skipped": [],
+        }
+
     conn = get_connection()
     try:
         result = apply_updates(conn, parsed)
@@ -95,6 +132,13 @@ def apply_raw_json(
             + result["archived"]
             + result["deleted"]
             + result["events"]
+            + [
+                item.split(":", 1)[0]
+                for item in result.get("documents_added", [])
+                + result.get("documents_metadata_updated", [])
+                + result.get("documents_linked", [])
+                + result.get("documents_archived", [])
+            ]
         )
     )
     append_jsonl(user_input, raw, parsed, changed_projects, source=source)
@@ -119,6 +163,10 @@ def apply_raw_json(
         "archived": result["archived"],
         "deleted": result["deleted"],
         "events": result["events"],
+        "documents_added": result.get("documents_added", []),
+        "documents_metadata_updated": result.get("documents_metadata_updated", []),
+        "documents_linked": result.get("documents_linked", []),
+        "documents_archived": result.get("documents_archived", []),
         "skipped": result["skipped"],
         "invalid": result.get("invalid", []),
         "change_summary": build_change_summary(result),

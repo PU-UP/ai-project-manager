@@ -576,6 +576,7 @@ git status --short
 Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 
 - [x] **Step 4 验收备注：** `SKILL.md` 中 `prioritization` 仅出现在禁止句「Do not perform… prioritization」中，非授权表达。
+- [x] **Step 2 已解决（Step 3）：** `system_judgement` 已 optional；单事件无 judgement 可 apply。
 - [x] **Step 2 契约已锁、实现待接：** `record_guard` 已校验 `_provenance`，但 apply 路径尚未强制；Step 6 落地 schema 后接入。
 
 ## 执行记录
@@ -605,7 +606,7 @@ Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 | 1    | 完成  | 2026-06-23 | `d45fcb6` | 验收通过 | 新增 `product-boundary.md`、`record-contract.md` |
 | 2    | 完成  | 2026-06-23 | `fe556e7` | 12 passed, 1 xfailed | `app/contracts/`、`tests/`、pytest dev 依赖 |
 | 3    | 完成  | 2026-06-23 | `d87dcad` | 17 passed | optional judgement、`change_summary`、`confirm_explicit` |
-| 4    | 完成  | 2026-06-23 | 待提交 | 17 passed；rg 无授权命中 | v0.9.0；四入口链接 canonical contract |
+| 4    | 完成  | 2026-06-23 | `e6dc92f` | 17 passed；rg 无授权命中 | v0.9.0；四入口链接 canonical contract |
 | 5    | 待执行 |            |        |      |                                               |
 | 6    | 待执行 |            |        |      |                                               |
 | 7    | 待执行 |            |        |      |                                               |

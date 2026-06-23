@@ -8,6 +8,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
+from app.legacy_fields import FORBIDDEN_NEW_WRITE_FIELDS
+
 CONTRACT_REF = "docs/record-contract.md"
 
 
@@ -149,9 +151,31 @@ def validate_record_payload(data: dict[str, Any]) -> list[ContractViolation]:
                 _violation(
                     "agent_inference_as_judgement",
                     f"project_memory_updates[{idx}].key_judgements 属于 Agent 推断",
-                    f"改用 open_questions 或经用户确认的用户决定；见 {CONTRACT_REF}",
+                    f"改用 open_questions 或 known_risks；见 {CONTRACT_REF}",
                 )
             )
+        for forbidden in ("progress_percent",):
+            if memory.get(forbidden) is not None:
+                violations.append(
+                    _violation(
+                        f"forbidden_legacy_field_{forbidden}",
+                        f"project_memory_updates[{idx}].{forbidden} 已废弃",
+                        "不得在新写入中使用；见 roadmap Step 8",
+                    )
+                )
+
+    for idx, creation in enumerate(data.get("project_creations") or []):
+        if not isinstance(creation, dict):
+            continue
+        for forbidden in FORBIDDEN_NEW_WRITE_FIELDS:
+            if creation.get(forbidden) is not None:
+                violations.append(
+                    _violation(
+                        f"forbidden_legacy_field_{forbidden}",
+                        f"project_creations[{idx}].{forbidden} 已废弃",
+                        "新项目不得写入决策型字段；见 roadmap Step 8",
+                    )
+                )
 
     for idx, deletion in enumerate(data.get("project_deletions") or []):
         if not isinstance(deletion, dict):
@@ -195,14 +219,7 @@ def validate_record_payload(data: dict[str, Any]) -> list[ContractViolation]:
     for idx, update in enumerate(data.get("project_updates") or []):
         if not isinstance(update, dict):
             continue
-        for forbidden in (
-            "value_score",
-            "risk_level",
-            "control_action",
-            "control_action_note",
-            "ai_delegation_level",
-            "human_intervention_level",
-        ):
+        for forbidden in FORBIDDEN_NEW_WRITE_FIELDS:
             if update.get(forbidden) is not None:
                 violations.append(
                     _violation(

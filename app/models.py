@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS projects (
     key_judgements TEXT NOT NULL DEFAULT '[]',
     validated_facts TEXT NOT NULL DEFAULT '[]',
     open_questions TEXT NOT NULL DEFAULT '[]',
+    known_risks TEXT NOT NULL DEFAULT '[]',
     discussion_brief TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
@@ -79,6 +80,7 @@ PROJECT_MEMORY_COLUMNS = {
     "validated_facts": "TEXT NOT NULL DEFAULT '[]'",
     "open_questions": "TEXT NOT NULL DEFAULT '[]'",
     "discussion_brief": "TEXT NOT NULL DEFAULT ''",
+    "known_risks": "TEXT NOT NULL DEFAULT '[]'",
 }
 
 CREATE_LOGS_TABLE = """

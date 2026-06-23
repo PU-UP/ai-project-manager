@@ -114,9 +114,10 @@ async def project_detail(request: Request, project_id: int):
         conn.close()
     if not row:
         return HTMLResponse("项目不存在", status_code=404)
+    from app.legacy_fields import project_for_core_export
     from app.schemas import row_to_project_dict
 
-    project = row_to_project_dict(row)
+    project = project_for_core_export(row_to_project_dict(row))
     return templates.TemplateResponse(
         request, "project.html", {"project": project, "events": events, "documents": documents}
     )

@@ -2,6 +2,7 @@
 
 import json
 from app.datetime_util import now_beijing
+from app.legacy_fields import NEUTRAL_DB_DEFAULTS
 from app.models import PROJECT_ALIASES
 from app.provenance import serialize_validated_facts
 from app.services.document_index import apply_document_operations
@@ -20,13 +21,7 @@ from app.schemas import (
 
 UPDATABLE_FIELDS = (
     "status",
-    "value_score",
-    "risk_level",
     "risk_note",
-    "ai_delegation_level",
-    "human_intervention_level",
-    "control_action",
-    "control_action_note",
     "latest_update",
 )
 
@@ -37,13 +32,11 @@ MEMORY_TEXT_FIELDS = (
     "discussion_brief",
 )
 MEMORY_JSON_FIELDS = (
-    "key_judgements",
     "validated_facts",
     "open_questions",
+    "known_risks",
 )
-MEMORY_INT_FIELDS = (
-    "progress_percent",
-)
+MEMORY_INT_FIELDS: tuple[str, ...] = ()
 
 
 def _normalize_name(name: str) -> str:
@@ -190,6 +183,7 @@ def update_project_memory(
 
 
 def create_project(conn, item: ProjectCreation, now: str) -> str:
+    defaults = NEUTRAL_DB_DEFAULTS
     conn.execute(
         """
         INSERT INTO projects (
@@ -202,13 +196,13 @@ def create_project(conn, item: ProjectCreation, now: str) -> str:
         (
             item.project_name.strip(),
             item.status,
-            item.value_score,
-            item.risk_level,
-            item.risk_note,
-            item.ai_delegation_level,
-            item.human_intervention_level,
-            item.control_action,
-            item.control_action_note,
+            defaults["value_score"],
+            defaults["risk_level"],
+            defaults["risk_note"],
+            defaults["ai_delegation_level"],
+            defaults["human_intervention_level"],
+            defaults["control_action"],
+            defaults["control_action_note"],
             item.latest_update,
             item.project_constraint,
             now,
@@ -263,10 +257,10 @@ def apply_deletion(conn, item: ProjectDeletion, project: dict, now: str) -> str:
     conn.execute(
         """
         UPDATE projects
-        SET status = ?, control_action = ?, control_action_note = ?, updated_at = ?
+        SET status = ?, updated_at = ?
         WHERE id = ?
         """,
-        ("archived", "archive", reason, now, project["id"]),
+        ("archived", now, project["id"]),
     )
     return "archived"
 

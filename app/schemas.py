@@ -5,7 +5,7 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-from app.models import CONTROL_ACTIONS, PROJECT_EVENT_TYPES, RISK_LEVELS, STATUSES
+from app.legacy_fields import FORBIDDEN_NEW_WRITE_FIELDS
 from app.provenance import (
     NEW_WRITE_SOURCE_TYPES,
     legacy_decision_provenance,
@@ -68,15 +68,19 @@ class DecisionProvenanceInput(BaseModel):
 class ProjectUpdate(BaseModel):
     project_name: str
     status: Status | None = None
-    value_score: int | None = Field(default=None, ge=1, le=5)
-    risk_level: RiskLevel | None = None
     risk_note: str | None = None
-    ai_delegation_level: int | None = Field(default=None, ge=0, le=5)
-    human_intervention_level: int | None = Field(default=None, ge=0, le=5)
-    control_action: ControlAction | None = None
-    control_action_note: str | None = Field(default=None, max_length=80)
     latest_update: str | None = Field(default=None, max_length=200)
     reason: str | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_legacy_decision_fields(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        for field in FORBIDDEN_NEW_WRITE_FIELDS:
+            if data.get(field) is not None:
+                raise ValueError(f"{field} 已废弃，不得在新写入中使用")
+        return data
 
 
 class ProjectRename(BaseModel):
@@ -97,14 +101,23 @@ class ProjectMemoryUpdate(BaseModel):
     project_name: str
     origin: str | None = None
     current_goal: str | None = None
-    progress_percent: int | None = Field(default=None, ge=0, le=100)
     progress_note: str | None = None
-    key_judgements: list[str] | None = None
+    known_risks: list[str] | None = None
     validated_facts: list[str | dict[str, Any]] | None = None
     open_questions: list[str] | None = None
     discussion_brief: str | None = None
     reason: str | None = None
     provenance: list[ProvenanceInput] | None = Field(default=None, alias="_provenance")
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_legacy_memory_fields(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        for field in ("key_judgements", "progress_percent"):
+            if data.get(field) is not None:
+                raise ValueError(f"{field} 已废弃，不得在新写入中使用")
+        return data
 
     @model_validator(mode="after")
     def validate_validated_facts_provenance(self) -> "ProjectMemoryUpdate":
@@ -155,16 +168,19 @@ class ProjectMemoryUpdate(BaseModel):
 class ProjectCreation(BaseModel):
     project_name: str
     status: Status = "observe"
-    value_score: int = Field(default=3, ge=1, le=5)
-    risk_level: RiskLevel = "medium"
-    risk_note: str = "新项目，尚未形成稳定判断"
-    ai_delegation_level: int = Field(default=3, ge=0, le=5)
-    human_intervention_level: int = Field(default=3, ge=0, le=5)
-    control_action: ControlAction = "observe"
-    control_action_note: str = Field(default="先记录并观察，不急于扩展范围", max_length=80)
-    latest_update: str = Field(default="由 Agent 根据用户确认创建", max_length=200)
-    project_constraint: str = "先验证真实需求和下一步控制动作，再扩展系统能力"
+    latest_update: str = Field(default="由用户确认创建", max_length=200)
+    project_constraint: str = ""
     reason: str | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_legacy_decision_fields(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        for field in FORBIDDEN_NEW_WRITE_FIELDS:
+            if data.get(field) is not None:
+                raise ValueError(f"{field} 已废弃，不得在新写入中使用")
+        return data
 
 
 class ProjectEventInput(BaseModel):
@@ -313,6 +329,7 @@ def row_to_project_dict(row) -> dict:
     d["key_judgements"] = _parse_string_list(d.get("key_judgements"))
     d["validated_facts"] = parse_validated_facts(d.get("validated_facts"))
     d["open_questions"] = _parse_string_list(d.get("open_questions"))
+    d["known_risks"] = _parse_string_list(d.get("known_risks"))
     if d.get("updated_at"):
         d["updated_at"] = format_display(d["updated_at"], with_seconds=False)
     if d.get("created_at"):

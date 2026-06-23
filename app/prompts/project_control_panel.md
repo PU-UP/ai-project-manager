@@ -46,12 +46,12 @@
 - 说明为何超出边界，建议交给通用或领域 Agent。
 - 不继续深度执行。
 
-## 字段枚举（legacy 字段仍可读，新写入慎用）
+## 字段枚举（legacy 决策型字段已废弃）
 
 - status: `active` | `maintain` | `observe` | `paused` | `archived`
 - event_type: `progress` | `decision` | `risk` | `feedback` | `idea` | `blocker` | `note`
 
-新 Record payload **优先**使用 `project_events` 与 `project_memory_updates`；避免在新写入中发送 `value_score`、`risk_level`、`control_action`、`ai_delegation_level` 等决策型字段（见 record-contract）。
+**已废弃（schema 拒绝新写入）：** `value_score`、`risk_level`、`control_action`、`ai_delegation_level`、`human_intervention_level`、`progress_percent`、`key_judgements`。用户确认的风险写入 `known_risks`（字符串列表），不自动分级。
 
 ## Record Mode JSON 格式
 
@@ -104,6 +104,7 @@
         }
       ],
       "open_questions": ["尚未闭合的问题"],
+      "known_risks": ["用户确认的风险描述（不自动分级）"],
       "discussion_brief": "供后续讨论的短摘要",
       "reason": "更新原因"
     }

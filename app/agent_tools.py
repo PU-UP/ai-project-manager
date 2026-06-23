@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import sys
 
+from app.legacy_fields import project_for_core_export
 from app.services.apply_control import apply_raw_json, build_context
 from app.version import ROOT_DIR, get_app_version
 
@@ -143,33 +144,27 @@ def _brief_context(ctx: dict, group_events: bool = False) -> dict:
     for project in ctx.get("projects", []):
         if project.get("status") == "archived":
             continue
+        core = project_for_core_export(project)
         memory = _without_empty(
             {
-                "origin": project.get("origin"),
-                "current_goal": project.get("current_goal"),
-                "progress_percent": project.get("progress_percent"),
-                "progress_note": _short_text(project.get("progress_note")),
-                "key_judgements": _short_list(project.get("key_judgements", [])),
-                "validated_facts": _short_fact_list(project.get("validated_facts", [])),
-                "open_questions": _short_list(project.get("open_questions", [])),
-                "discussion_brief": _short_text(project.get("discussion_brief")),
+                "origin": core.get("origin"),
+                "current_goal": core.get("current_goal"),
+                "progress_note": _short_text(core.get("progress_note")),
+                "known_risks": _short_list(core.get("known_risks", [])),
+                "validated_facts": _short_fact_list(core.get("validated_facts", [])),
+                "open_questions": _short_list(core.get("open_questions", [])),
+                "discussion_brief": _short_text(core.get("discussion_brief")),
             }
         )
         item = _without_empty(
             {
-                "id": project.get("id"),
-                "name": project.get("name"),
-                "status": project.get("status"),
-                "value_score": project.get("value_score"),
-                "risk_level": project.get("risk_level"),
-                "risk_note": _short_text(project.get("risk_note")),
-                "ai_delegation_level": project.get("ai_delegation_level"),
-                "human_intervention_level": project.get("human_intervention_level"),
-                "control_action": project.get("control_action"),
-                "control_action_note": project.get("control_action_note"),
-                "latest_update": _short_text(project.get("latest_update")),
-                "updated_at": project.get("updated_at"),
+                "id": core.get("id"),
+                "name": core.get("name"),
+                "status": core.get("status"),
+                "latest_update": _short_text(core.get("latest_update")),
+                "updated_at": core.get("updated_at"),
                 "memory": memory,
+                "legacy_decision_fields": core.get("legacy_decision_fields"),
                 "recent_events": [
                     _brief_event(event)
                     for event in events_by_project.get(project.get("name"), [])[:3]
@@ -191,7 +186,7 @@ def _brief_context(ctx: dict, group_events: bool = False) -> dict:
         "project_documents": [
             _brief_document(doc) for doc in ctx.get("project_documents", [])[:20]
         ],
-        "latest_system_judgement": ctx.get("latest_system_judgement"),
+        "legacy_system_judgement": ctx.get("legacy_system_judgement"),
         "agent_operations": ctx.get("agent_operations"),
         "prompt_path": ctx.get("prompt_path"),
         "prompt_hint": ctx.get("prompt_hint"),

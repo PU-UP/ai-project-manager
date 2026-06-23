@@ -8,6 +8,7 @@ from app.services.control_parser import parse_control_response
 from app.services.episode_log import append_episode
 from app.services.interaction_log import append_jsonl, save_log
 from app.services.project_updater import apply_updates, build_change_summary, updates_summary
+from app.legacy_fields import project_for_core_export
 from app.version import get_app_version
 
 
@@ -19,7 +20,7 @@ def build_context() -> dict:
         from app.services.interaction_log import get_latest_judgement
         from app.services.project_updater import list_projects, list_recent_events
 
-        projects = list_projects(conn)
+        projects = [project_for_core_export(p) for p in list_projects(conn)]
         recent_events = list_recent_events(conn, limit=30)
         project_documents = list_documents(conn)
         latest_judgement = get_latest_judgement(conn)
@@ -39,7 +40,7 @@ def build_context() -> dict:
         "projects": projects,
         "project_documents": project_documents,
         "recent_events": recent_events,
-        "latest_system_judgement": latest_judgement,
+        "legacy_system_judgement": latest_judgement,
         "agent_operations": {
             "context_mode": "默认只读：恢复、复述、指出缺口、最多 1–3 个澄清问题；不产出 apply JSON。",
             "record_mode": "用户明确记录或确认写入摘要后：输出严格 JSON 并 apply；不需 system_judgement；见 docs/record-contract.md。",

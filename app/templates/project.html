@@ -53,10 +53,14 @@
         <span>项目约束</span>
         <p>{{ project.constraint or '缺少记录' }}</p>
       </div>
-      {% if project.risk_note %}
+      {% if project.known_risks %}
       <div>
-        <span>风险记录（用户/历史存档）</span>
-        <p>{{ project.risk_note }}</p>
+        <span>已知风险（用户确认）</span>
+        <ul>
+          {% for item in project.known_risks %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
       </div>
       {% endif %}
     </div>
@@ -92,16 +96,6 @@
         <p class="empty-inline">暂无开放问题</p>
         {% endif %}
       </div>
-      {% if project.key_judgements %}
-      <div class="memory-list-block memory-list-block--legacy">
-        <h3>历史判断（legacy）</h3>
-        <ul>
-          {% for item in project.key_judgements %}
-          <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
-      </div>
-      {% endif %}
     </div>
   </div>
 

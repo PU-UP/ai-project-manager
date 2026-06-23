@@ -1,6 +1,6 @@
 # Roadmap：将 AI 项目管家收敛为纯项目经理
 
-> 状态：执行中（Step 0–7 已完成）
+> 状态：执行中（Step 0–8 已完成）
 >
 > 创建日期：2026-06-23
 >
@@ -464,8 +464,8 @@ node --check app/static/app.js
 
 ### 前置条件
 
-- [ ] Step 7 完成。
-- [ ] 已确认 snapshot、provenance 和 documents 足以承载主要 UI。
+- [x] Step 7 完成。
+- [x] 已确认 snapshot、provenance 和 documents 足以承载主要 UI。
 
 ### 待废弃字段
 
@@ -480,20 +480,20 @@ node --check app/static/app.js
 
 ### Todo
 
-- [ ] 第一阶段：schema 停止新写入上述字段。
-- [ ] 第二阶段：export 将其标为 legacy，不作为核心 context。
-- [ ] 第三阶段：UI 移除默认展示。
-- [ ] 将明确由用户给出的风险迁入 `known_risks`。
-- [ ] 将可确认的历史 judgement 拆分为 user decision 或 legacy note；不得自动升级为 confirmed。
-- [ ] 评估 SQLite 是否值得物理删列；若收益不足，保留 nullable legacy 列。
-- [ ] 删除不再使用的枚举、label、seed 示例和代码路径。
-- [ ] 添加旧数据库回归测试。
+- [x] 第一阶段：schema 停止新写入上述字段。
+- [x] 第二阶段：export 将其标为 legacy，不作为核心 context。
+- [x] 第三阶段：UI 移除默认展示。
+- [x] 将明确由用户给出的风险迁入 `known_risks`。
+- [x] 将可确认的历史 judgement 拆分为 user decision 或 legacy note；不得自动升级为 confirmed。
+- [x] 评估 SQLite 是否值得物理删列；若收益不足，保留 nullable legacy 列。
+- [x] 删除不再使用的枚举、label、seed 示例和代码路径。
+- [x] 添加旧数据库回归测试。
 
 ### 完成定义
 
-- [ ] 新项目不再要求价值评分、风险评级、委派等级或控制动作。
-- [ ] 默认导出和页面不含决策型字段。
-- [ ] 历史数据没有静默丢失。
+- [x] 新项目不再要求价值评分、风险评级、委派等级或控制动作。
+- [x] 默认导出和页面不含决策型字段。
+- [x] 历史数据没有静默丢失。
 
 ### 验收命令
 
@@ -612,7 +612,7 @@ Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 | 5+   | 完成  | 2026-06-23 | `b1736eb` | — | 组合快照卡片排版修补 |
 | 6    | 完成  | 2026-06-23 |        | 31 passed | provenance schema/迁移/record_guard/UI/export |
 | 7    | 完成  | 2026-06-23 |        | 41 passed | project_documents + document_* apply/export/UI |
-| 8    | 待执行 |            |        |      |                                               |
+| 8    | 完成  | 2026-06-23 |        | 48 passed | legacy 决策字段废弃 + known_risks |
 | 9    | 待执行 |            |        |      |                                               |
 
 

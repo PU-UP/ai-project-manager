@@ -1,6 +1,6 @@
 # Roadmap：将 AI 项目管家收敛为纯项目经理
 
-> 状态：执行中（Step 0–3 已完成）
+> 状态：执行中（Step 0–4 已完成）
 >
 > 创建日期：2026-06-23
 >
@@ -240,7 +240,7 @@ git diff --check
 
 ### 前置条件
 
-- [ ] Step 3 完成且契约测试通过。
+- [x] Step 3 完成且契约测试通过。
 
 ### 主要文件
 
@@ -254,25 +254,25 @@ git diff --check
 
 ### Todo
 
-- [ ] 删除 Work Mode 及其 analysis/review/synthesis/planning/prioritization/risk assessment 授权。
-- [ ] 只保留 Context / Record / Handoff 三模式。
-- [ ] 把“参与项目工作”“方向判断”“提出建议”改为恢复、整理、复述、澄清和交接。
-- [ ] 把“我对这次输入的判断”改为“当前记录摘要/信息缺口”。
-- [ ] Prompt 不再要求 real progress、pseudo progress、AI delegation 或 top recommendation。
-- [ ] 删除全局 Prompt 内项目特例；项目级规则从 constraint/context 读取。
-- [ ] `AGENTS.md` 精简为命令优先入口，并链接 canonical boundary/record contract。
-- [ ] README 面向人描述用途，不重复完整运行协议。
-- [ ] runtime skill 只保留触发、操作步骤、写入门槛和 Handoff。
-- [ ] 修正 `build_context()` 的 `runtime.role`、`principle` 和 `agent_operations`。
-- [ ] 更新版本时同步 `pyproject.toml`、`uv.lock`、runtime skill 和 usage script。
-- [ ] 运行 intent matrix；深度请求必须进入 Handoff。
+- [x] 删除 Work Mode 及其 analysis/review/synthesis/planning/prioritization/risk assessment 授权。
+- [x] 只保留 Context / Record / Handoff 三模式。
+- [x] 把“参与项目工作”“方向判断”“提出建议”改为恢复、整理、复述、澄清和交接。
+- [x] 把“我对这次输入的判断”改为“当前记录摘要/信息缺口”。
+- [x] Prompt 不再要求 real progress、pseudo progress、AI delegation 或 top recommendation。
+- [x] 删除全局 Prompt 内项目特例；项目级规则从 constraint/context 读取。
+- [x] `AGENTS.md` 精简为命令优先入口，并链接 canonical boundary/record contract。
+- [x] README 面向人描述用途，不重复完整运行协议。
+- [x] runtime skill 只保留触发、操作步骤、写入门槛和 Handoff。
+- [x] 修正 `build_context()` 的 `runtime.role`、`principle` 和 `agent_operations`。
+- [x] 更新版本时同步 `pyproject.toml`、`uv.lock`、runtime skill 和 usage script。
+- [x] 运行 intent matrix；深度请求必须进入 Handoff。
 
 ### 完成定义
 
-- [ ] 四个知识入口都链接同一个产品边界源。
-- [ ] runtime 中不存在默认深度项目思考能力。
-- [ ] Handoff 会输出上下文包后停止。
-- [ ] 新 Agent 不需要读取重复、冲突的规则。
+- [x] 四个知识入口都链接同一个产品边界源。
+- [x] runtime 中不存在默认深度项目思考能力。
+- [x] Handoff 会输出上下文包后停止。
+- [x] 新 Agent 不需要读取重复、冲突的规则。
 
 ### 验收命令
 
@@ -575,7 +575,7 @@ git status --short
 
 Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 
-- [x] **Step 2 已解决（Step 3）：** `test_single_event_payload_validates_without_system_judgement` — `system_judgement` 已 optional。
+- [x] **Step 4 验收备注：** `SKILL.md` 中 `prioritization` 仅出现在禁止句「Do not perform… prioritization」中，非授权表达。
 - [x] **Step 2 契约已锁、实现待接：** `record_guard` 已校验 `_provenance`，但 apply 路径尚未强制；Step 6 落地 schema 后接入。
 
 ## 执行记录
@@ -605,7 +605,7 @@ Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 | 1    | 完成  | 2026-06-23 | `d45fcb6` | 验收通过 | 新增 `product-boundary.md`、`record-contract.md` |
 | 2    | 完成  | 2026-06-23 | `fe556e7` | 12 passed, 1 xfailed | `app/contracts/`、`tests/`、pytest dev 依赖 |
 | 3    | 完成  | 2026-06-23 | `d87dcad` | 17 passed | optional judgement、`change_summary`、`confirm_explicit` |
-| 4    | 待执行 |            |        |      |                                               |
+| 4    | 完成  | 2026-06-23 | 待提交 | 17 passed；rg 无授权命中 | v0.9.0；四入口链接 canonical contract |
 | 5    | 待执行 |            |        |      |                                               |
 | 6    | 待执行 |            |        |      |                                               |
 | 7    | 待执行 |            |        |      |                                               |
@@ -616,7 +616,7 @@ Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 ## Roadmap 完成判定
 
 - [x] Context、Record、Handoff 三模式均有契约测试。
-- [ ] 项目管家不会在独立项目中进行深度思考、内容迭代或代替决策。
+- [x] 项目管家不会在独立项目中进行深度思考、内容迭代或代替决策。
 - [ ] 项目上下文中的事实和决定都有来源与确认状态。
 - [ ] 文档整理是一等能力，且不会扩张为自主内容创作。
 - [ ] 首页展示确定性上下文健康信息，不展示 Agent 控制建议。

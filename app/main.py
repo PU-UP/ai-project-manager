@@ -1,11 +1,7 @@
 """
-AI项目管家 — 给外部 Agent 使用的个人项目经理工程框架。
+AI项目管家 — 项目档案与上下文展示。
 
-不是：Notion 替代品、Todo List、日程管理、复杂 PM、多用户 SaaS、
-大型 Dashboard、自动创业系统、每日打卡、投资决策系统、工作汇报系统。
-
-是：由外部 Agent 按规则维护项目记忆、事件记录与控制判断，
-并展示近期项目局面、价值、风险、AI 接管程度与下一控制动作。
+由外部 Agent 维护项目记忆与事件记录；页面展示确定性档案快照，不展示 Agent 控制建议。
 """
 
 import json
@@ -19,10 +15,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.db import ROOT_DIR, get_connection, init_db
-from app.labels import ACTION_LABELS, EVENT_LABELS, RISK_LABELS, STATUS_LABELS
+from app.labels import EVENT_LABELS, STATUS_LABELS
 from app.services.apply_control import apply_raw_json, build_context
-from app.services.control_analyzer import judgement_lists
-from app.services.interaction_log import get_latest_judgement
+from app.services.context_snapshot import build_portfolio_snapshot
 from app.services.project_updater import list_projects, list_recent_events
 
 load_dotenv(ROOT_DIR / ".env")
@@ -30,25 +25,25 @@ load_dotenv(ROOT_DIR / ".env")
 APP_DIR = Path(__file__).resolve().parent
 templates = Jinja2Templates(directory=str(APP_DIR / "templates"))
 templates.env.globals["status_label"] = lambda s: STATUS_LABELS.get(s, s)
-templates.env.globals["risk_label"] = lambda r: RISK_LABELS.get(r, r)
-templates.env.globals["action_label"] = lambda a: ACTION_LABELS.get(a, a)
 templates.env.globals["event_label"] = lambda e: EVENT_LABELS.get(e, e)
 templates.env.globals["static_version"] = lambda name: int(
     (APP_DIR / "static" / name).stat().st_mtime
 )
 
 
-def _project_stats(projects: list[dict]) -> dict:
+def _snapshot_stats(snapshot: dict) -> dict:
+    counts = snapshot["status_counts"]
     return {
-        "total": len(projects),
-        "active": sum(1 for p in projects if p.get("status") == "active"),
-        "high_risk": sum(1 for p in projects if p.get("risk_level") == "high"),
-        "need_human": sum(
-            1 for p in projects if (p.get("human_intervention_level") or 0) >= 4
-        ),
+        "total": snapshot["total"],
+        "active": counts.get("active", 0),
+        "recently_updated": snapshot["recently_updated_count"],
+        "stale": snapshot["stale_count"],
+        "missing_memory": snapshot["missing_memory_count"],
+        "pending_confirmation": snapshot["pending_confirmation_count"],
     }
 
-app = FastAPI(title="AI项目管家", description="个人项目进度控制面板")
+
+app = FastAPI(title="AI项目管家", description="项目档案与上下文面板")
 app.mount("/static", StaticFiles(directory=str(APP_DIR / "static")), name="static")
 
 
@@ -63,11 +58,10 @@ async def index(request: Request):
     try:
         projects = list_projects(conn)
         recent_events = list_recent_events(conn, limit=100)
-        judgement = get_latest_judgement(conn)
+        snapshot = build_portfolio_snapshot(projects)
     finally:
         conn.close()
 
-    j = judgement_lists(judgement)
     flash = _parse_flash(request.query_params)
 
     return templates.TemplateResponse(
@@ -75,10 +69,10 @@ async def index(request: Request):
         "index.html",
         {
             "projects": projects,
-            "judgement": j,
+            "snapshot": snapshot,
             "recent_events": recent_events,
             "flash": flash,
-            "stats": _project_stats(projects),
+            "stats": _snapshot_stats(snapshot),
         },
     )
 
@@ -119,6 +113,16 @@ async def project_detail(request: Request, project_id: int):
     return templates.TemplateResponse(
         request, "project.html", {"project": project, "events": events}
     )
+
+
+@app.get("/api/snapshot")
+async def api_snapshot():
+    conn = get_connection()
+    try:
+        projects = list_projects(conn)
+        return JSONResponse(build_portfolio_snapshot(projects))
+    finally:
+        conn.close()
 
 
 @app.get("/api/context")

@@ -6,27 +6,10 @@
     paused: "短期暂停",
     archived: "历史归档",
   };
-  const actionLabels = {
-    continue: "继续",
-    maintain: "维持",
-    observe: "观察",
-    pause: "暂停",
-    delegate_to_ai: "AI执行",
-    human_intervene: "人工介入",
-    seek_feedback: "找反馈",
-    narrow_scope: "收窄",
-    change_metric: "调标准",
-    archive: "归档",
-  };
 
   function applyGlobalLabels(root = document) {
     root.querySelectorAll("[data-status-value]").forEach((item) => {
       const label = statusLabels[item.dataset.statusValue];
-      if (label) item.textContent = label;
-    });
-    root.querySelectorAll("[data-action-value], [data-priority-action]").forEach((item) => {
-      const action = item.dataset.actionValue || item.dataset.priorityAction;
-      const label = actionLabels[action];
       if (label) item.textContent = label;
     });
   }
@@ -104,7 +87,7 @@
   const activeFilters = new Set();
   const validStatuses = ["active", "maintain", "observe", "paused", "archived"];
   const defaultStatuses = validStatuses.filter((status) => status !== "archived");
-  const validSortKeys = ["name", "status", "value", "risk", "ai", "human", "updated"];
+  const validSortKeys = ["name", "status", "updated"];
 
   const statusRank = {
     active: 1,
@@ -112,11 +95,6 @@
     observe: 3,
     paused: 4,
     archived: 5,
-  };
-  const riskRank = {
-    high: 1,
-    medium: 2,
-    low: 3,
   };
   let currentSort = { key: "updated", direction: "desc" };
 
@@ -194,10 +172,6 @@
 
   function sortValue(row, key) {
     if (key === "status") return statusRank[row.dataset.status] || 99;
-    if (key === "risk") return riskRank[row.dataset.risk] || 99;
-    if (key === "value" || key === "ai" || key === "human") {
-      return Number(row.dataset[key] || 0);
-    }
     return (row.dataset[key] || "").toString();
   }
 
@@ -255,9 +229,7 @@
   sortButtons.forEach((button) => {
     button.addEventListener("click", () => {
       const key = button.dataset.sortKey;
-      const defaultDirection = ["name", "status", "risk"].includes(key)
-        ? "asc"
-        : "desc";
+      const defaultDirection = ["name", "status"].includes(key) ? "asc" : "desc";
       currentSort = {
         key,
         direction: currentSort.key === key && currentSort.direction === defaultDirection

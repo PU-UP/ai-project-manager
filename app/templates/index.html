@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros.html" import level_bar, tag_status, tag_risk %}
+{% from "macros.html" import tag_status %}
 
 {% block title %}AI项目管家{% endblock %}
 
@@ -10,10 +10,10 @@
       <span class="brand-mark" aria-hidden="true"></span>
       <div>
         <h1>AI项目管家</h1>
-        <p class="hero-sub">项目总览 · 近期记录 · 下一步方向</p>
+        <p class="hero-sub">项目档案 · 确定性快照 · 近期记录</p>
       </div>
     </div>
-    <p class="hero-hint">快速看到最近在推进什么、哪里需要介入、下一步该收敛到哪里。</p>
+    <p class="hero-hint">基于数据库字段展示当前记录状态；不含 Agent 控制建议。</p>
   </div>
   <div class="stats-row">
     <div class="stat-chip">
@@ -24,13 +24,21 @@
       <span class="stat-num">{{ stats.active }}</span>
       <span class="stat-label">当前推进</span>
     </div>
+    <div class="stat-chip">
+      <span class="stat-num">{{ stats.recently_updated }}</span>
+      <span class="stat-label">最近更新</span>
+    </div>
     <div class="stat-chip stat-chip--warn">
-      <span class="stat-num">{{ stats.high_risk }}</span>
-      <span class="stat-label">高风险</span>
+      <span class="stat-num">{{ stats.stale }}</span>
+      <span class="stat-label">缺少近期更新</span>
+    </div>
+    <div class="stat-chip">
+      <span class="stat-num">{{ stats.missing_memory }}</span>
+      <span class="stat-label">缺少记录</span>
     </div>
     <div class="stat-chip stat-chip--human">
-      <span class="stat-num">{{ stats.need_human }}</span>
-      <span class="stat-label">需介入</span>
+      <span class="stat-num">{{ stats.pending_confirmation }}</span>
+      <span class="stat-label">待用户确认</span>
     </div>
   </div>
 </header>
@@ -47,57 +55,69 @@
 </section>
 {% endif %}
 
-<section class="card card--judgement">
+<section class="card card--snapshot">
   <div class="card-head">
-    <h2>当前判断</h2>
-    {% if judgement.summary %}<span class="card-badge">最新</span>{% endif %}
+    <h2>组合快照</h2>
+    <span class="card-meta">计算于 {{ snapshot.computed_at }} · 最近 {{ snapshot.thresholds.recent_days }} 天 / 陈旧 {{ snapshot.thresholds.stale_days }} 天</span>
   </div>
 
-  {% if judgement.summary %}
-  <blockquote class="judgement-lead">{{ judgement.summary }}</blockquote>
+  <div class="snapshot-status-row">
+    {% for key, label in [
+      ('active', '当前推进'),
+      ('maintain', '维持运行'),
+      ('observe', '观察孵化'),
+      ('paused', '短期暂停'),
+      ('archived', '历史归档')
+    ] %}
+    <div class="snapshot-status-chip">
+      <span class="snapshot-status-num">{{ snapshot.status_counts[key] }}</span>
+      <span class="snapshot-status-label">{{ label }}</span>
+    </div>
+    {% endfor %}
+  </div>
 
-  <div class="insight-grid">
+  <div class="insight-grid insight-grid--snapshot">
     <div class="insight insight--positive">
-      <h3>真推进</h3>
-      <ul>{% for x in judgement.real_progress %}<li>{{ x }}</li>{% else %}<li class="empty">暂无</li>{% endfor %}</ul>
+      <h3>最近更新</h3>
+      <ul>
+        {% for item in snapshot.recently_updated %}
+        <li><a href="/project/{{ item.id }}">{{ item.name }}</a> · {{ item.updated_at or '—' }}</li>
+        {% else %}
+        <li class="empty">暂无（{{ snapshot.thresholds.recent_days }} 天内）</li>
+        {% endfor %}
+      </ul>
     </div>
     <div class="insight insight--warning">
-      <h3>假性推进风险</h3>
-      <ul>{% for x in judgement.pseudo_progress_risk %}<li>{{ x }}</li>{% else %}<li class="empty">暂无</li>{% endfor %}</ul>
-    </div>
-    <div class="insight insight--ai">
-      <h3>可交给 AI</h3>
-      <ul>{% for x in judgement.delegate_to_ai %}<li>{{ x }}</li>{% else %}<li class="empty">暂无</li>{% endfor %}</ul>
-    </div>
-    <div class="insight insight--human">
-      <h3>需我亲自介入</h3>
-      <ul>{% for x in judgement.need_human_intervention %}<li>{{ x }}</li>{% else %}<li class="empty">暂无</li>{% endfor %}</ul>
+      <h3>缺少近期更新</h3>
+      <ul>
+        {% for item in snapshot.stale_projects %}
+        <li><a href="/project/{{ item.id }}">{{ item.name }}</a> · {{ item.days_since_update }} 天前</li>
+        {% else %}
+        <li class="empty">暂无</li>
+        {% endfor %}
+      </ul>
     </div>
     <div class="insight insight--muted">
-      <h3>建议暂停或忽略</h3>
-      <ul>{% for x in judgement.pause_or_ignore %}<li>{{ x }}</li>{% else %}<li class="empty">暂无</li>{% endfor %}</ul>
+      <h3>缺少记录</h3>
+      <ul>
+        {% for item in snapshot.missing_memory %}
+        <li><a href="/project/{{ item.id }}">{{ item.name }}</a> · {{ item.missing_fields | join('、') }}</li>
+        {% else %}
+        <li class="empty">暂无</li>
+        {% endfor %}
+      </ul>
+    </div>
+    <div class="insight insight--human">
+      <h3>待用户确认</h3>
+      <ul>
+        {% for item in snapshot.pending_confirmation %}
+        <li><a href="/project/{{ item.id }}">{{ item.name }}</a> · {{ item.open_questions_count }} 个开放问题</li>
+        {% else %}
+        <li class="empty">暂无开放问题</li>
+        {% endfor %}
+      </ul>
     </div>
   </div>
-
-  {% if judgement.top_control_recommendation %}
-  <div class="priority-callout">
-    <span class="priority-label">首要建议</span>
-    <p>
-      <strong>{{ judgement.top_control_recommendation.project_name }}</strong>
-      <span
-        class="priority-action"
-        data-priority-action="{{ judgement.top_control_recommendation.control_action }}"
-      >{{ action_label(judgement.top_control_recommendation.control_action) }}</span>
-      — {{ judgement.top_control_recommendation.note }}
-    </p>
-  </div>
-  {% endif %}
-  {% else %}
-  <div class="empty-state">
-    <p>暂无判断</p>
-    <span>有新的项目输入后，这里会给出整体方向。</span>
-  </div>
-  {% endif %}
 </section>
 
 <section class="card card--projects card--table">
@@ -122,11 +142,7 @@
         <tr>
           <th class="col-name"><button class="sort-btn" type="button" data-sort-key="name">项目<span class="sort-indicator"></span></button></th>
           <th class="col-status"><button class="sort-btn" type="button" data-sort-key="status">状态<span class="sort-indicator"></span></button></th>
-          <th class="col-score" title="主观价值 1-5"><button class="sort-btn" type="button" data-sort-key="value">价值<span class="sort-indicator"></span></button></th>
-          <th class="col-risk"><button class="sort-btn" type="button" data-sort-key="risk">风险<span class="sort-indicator"></span></button></th>
-          <th class="col-score" title="AI 接管 0-5"><button class="sort-btn" type="button" data-sort-key="ai">AI接管<span class="sort-indicator"></span></button></th>
-          <th class="col-score col-score--human" title="人工介入 0-5"><button class="sort-btn" type="button" data-sort-key="human">人工介入<span class="sort-indicator"></span></button></th>
-          <th class="col-time"><button class="sort-btn" type="button" data-sort-key="updated">上次更新时间<span class="sort-indicator"></span></button></th>
+          <th class="col-time"><button class="sort-btn" type="button" data-sort-key="updated">最近更新<span class="sort-indicator"></span></button></th>
           <th class="col-detail">详情</th>
         </tr>
       </thead>
@@ -138,20 +154,12 @@
           data-project-id="{{ p.id }}"
           data-status="{{ p.status }}"
           data-name="{{ p.name }}"
-          data-value="{{ p.value_score }}"
-          data-risk="{{ p.risk_level }}"
-          data-ai="{{ p.ai_delegation_level }}"
-          data-human="{{ p.human_intervention_level }}"
           data-updated="{{ p.updated_at or '' }}"
         >
           <td class="col-name">
             <a href="/project/{{ p.id }}" class="table-project-link">{{ p.name }}</a>
           </td>
           <td class="col-status">{{ tag_status(p.status) }}</td>
-          <td class="col-score">{{ level_bar(p.value_score, compact=true) }}</td>
-          <td class="col-risk">{{ tag_risk(p.risk_level) }}</td>
-          <td class="col-score">{{ level_bar(p.ai_delegation_level, compact=true) }}</td>
-          <td class="col-score col-score--human">{{ level_bar(p.human_intervention_level, compact=true) }}</td>
           <td class="col-time"><time>{{ p.updated_at or '—' }}</time></td>
           <td class="col-detail">
             <button
@@ -163,23 +171,19 @@
           </td>
         </tr>
         <tr class="project-detail-row" data-detail-for="{{ p.id }}" hidden>
-          <td colspan="8">
+          <td colspan="4">
             <div class="project-row-detail">
               <div>
-                <span>动作说明</span>
-                <p>{{ p.control_action_note or '暂无' }}</p>
-              </div>
-              <div>
                 <span>最近进展</span>
-                <p>{{ p.latest_update or '暂无' }}</p>
-              </div>
-              <div>
-                <span>风险</span>
-                <p>{{ p.risk_note or '暂无' }}</p>
+                <p>{{ p.latest_update or '缺少记录' }}</p>
               </div>
               <div>
                 <span>约束</span>
-                <p>{{ p.constraint or '暂无' }}</p>
+                <p>{{ p.constraint or '缺少记录' }}</p>
+              </div>
+              <div>
+                <span>讨论摘要</span>
+                <p>{{ p.discussion_brief or '缺少记录' }}</p>
               </div>
             </div>
           </td>
@@ -230,8 +234,8 @@
         <p>{{ e.summary }}</p>
         {% if e.decision or e.next_action %}
         <div class="timeline-meta">
-          {% if e.decision %}<span>判断：{{ e.decision }}</span>{% endif %}
-          {% if e.next_action %}<span>下一步：{{ e.next_action }}</span>{% endif %}
+          {% if e.decision %}<span>记录：{{ e.decision }}</span>{% endif %}
+          {% if e.next_action %}<span>待办：{{ e.next_action }}</span>{% endif %}
         </div>
         {% endif %}
       </div>

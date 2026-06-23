@@ -1,6 +1,6 @@
 # Roadmap：将 AI 项目管家收敛为纯项目经理
 
-> 状态：执行中（Step 0–4 已完成）
+> 状态：执行中（Step 0–5 已完成）
 >
 > 创建日期：2026-06-23
 >
@@ -300,7 +300,7 @@ git diff --check
 
 ### 前置条件
 
-- [ ] Step 4 完成。
+- [x] Step 4 完成。
 
 ### 主要文件
 
@@ -314,19 +314,19 @@ git diff --check
 
 ### Todo
 
-- [ ] 首页移除 `top_control_recommendation`、真实/伪进展、AI 委派和人工介入建议。
-- [ ] 项目详情不再突出 control action 和 Agent 风险评级。
-- [ ] 新增 deterministic portfolio snapshot：状态数量、最近更新、陈旧项目、缺失字段、待确认项。
-- [ ] 所有 snapshot 指标由数据库字段确定性计算，不调用 LLM。
-- [ ] 旧 system judgement 仅在需要时作为 legacy 历史查看，不进入默认首页。
-- [ ] 页面文案使用“待用户确认”“缺少记录”“最近更新”，不使用“建议继续/暂停”。
-- [ ] 添加最小 UI/API smoke test。
+- [x] 首页移除 `top_control_recommendation`、真实/伪进展、AI 委派和人工介入建议。
+- [x] 项目详情不再突出 control action 和 Agent 风险评级。
+- [x] 新增 deterministic portfolio snapshot：状态数量、最近更新、陈旧项目、缺失字段、待确认项。
+- [x] 所有 snapshot 指标由数据库字段确定性计算，不调用 LLM。
+- [x] 旧 system judgement 仅在需要时作为 legacy 历史查看，不进入默认首页。
+- [x] 页面文案使用“待用户确认”“缺少记录”“最近更新”，不使用“建议继续/暂停”。
+- [x] 添加最小 UI/API smoke test。
 
 ### 完成定义
 
-- [ ] 默认首页没有 Agent 控制建议。
-- [ ] 每个组合指标可追溯到数据库查询。
-- [ ] 旧项目仍能打开详情页。
+- [x] 默认首页没有 Agent 控制建议。
+- [x] 每个组合指标可追溯到数据库查询。
+- [x] 旧项目仍能打开详情页。
 
 ### 验收命令
 
@@ -620,7 +620,7 @@ Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 - [x] 项目管家不会在独立项目中进行深度思考、内容迭代或代替决策。
 - [ ] 项目上下文中的事实和决定都有来源与确认状态。
 - [ ] 文档整理是一等能力，且不会扩张为自主内容创作。
-- [ ] 首页展示确定性上下文健康信息，不展示 Agent 控制建议。
+- [x] 首页展示确定性上下文健康信息，不展示 Agent 控制建议。
 - [x] 普通写入无需 `system_judgement`。
 - [ ] 旧项目和历史记录仍可读取。
 - [ ] 统一 verify、全量测试和 UI smoke 全部通过。

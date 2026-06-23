@@ -180,6 +180,56 @@ body {
 .stat-chip--warn .stat-num { color: var(--warning); }
 .stat-chip--human .stat-num { color: var(--human); }
 
+/* —— Portfolio snapshot —— */
+.card--snapshot .insight-grid--snapshot {
+  margin-bottom: 0;
+}
+
+.snapshot-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.snapshot-status-chip {
+  display: flex;
+  flex-direction: column;
+  min-width: 4.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--surface-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.snapshot-status-num {
+  font-size: 1.1rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.snapshot-status-label {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.insight-grid a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.insight-grid a:hover {
+  text-decoration: underline;
+}
+
+.memory-list-block--legacy {
+  opacity: 0.75;
+}
+
+.memory-list-block--legacy h3 {
+  color: var(--text-muted);
+}
+
 /* —— Cards —— */
 .card {
   background: var(--surface);

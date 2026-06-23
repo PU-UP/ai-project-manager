@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros.html" import level_bar, tag_status, tag_risk, tag_action %}
+{% from "macros.html" import tag_status %}
 
 {% block title %}{{ project.name }} — AI项目管家{% endblock %}
 
@@ -14,8 +14,6 @@
   <h1 class="detail-title">{{ project.name }}</h1>
   <div class="detail-tags">
     {{ tag_status(project.status) }}
-    {{ tag_risk(project.risk_level) }}
-    {{ tag_action(project.control_action) }}
   </div>
 </header>
 
@@ -25,73 +23,48 @@
     <div class="memory-brief-grid">
       <div class="memory-field">
         <span>项目初衷</span>
-        <p>{{ project.origin or '暂无项目初衷记录' }}</p>
+        <p>{{ project.origin or '缺少记录' }}</p>
       </div>
       <div class="memory-field">
         <span>当前目标</span>
-        <p>{{ project.current_goal or '暂无当前目标记录' }}</p>
+        <p>{{ project.current_goal or '缺少记录' }}</p>
       </div>
     </div>
-    <div class="progress-block">
-      <div class="progress-top">
-        <span>阶段进度</span>
-        <strong>{{ project.progress_percent or 0 }}%</strong>
-      </div>
-      <div class="progress-track" aria-hidden="true">
-        <div class="progress-fill" style="width: {{ project.progress_percent or 0 }}%"></div>
-      </div>
-      <p>{{ project.progress_note or '暂无阶段进度说明' }}</p>
+    {% if project.progress_note %}
+    <div class="memory-field memory-field--brief">
+      <span>阶段说明</span>
+      <p>{{ project.progress_note }}</p>
     </div>
+    {% endif %}
     <div class="memory-field memory-field--brief">
       <span>讨论摘要</span>
-      <p>{{ project.discussion_brief or '暂无讨论摘要' }}</p>
+      <p>{{ project.discussion_brief or '缺少记录' }}</p>
     </div>
   </div>
 
   <div class="detail-card detail-card--wide">
-    <h2>当前控制</h2>
-    <p class="detail-action-note">{{ project.control_action_note }}</p>
-    <dl class="metric-list metric-list--control">
-      <div class="metric-row">
-        <dt>价值</dt>
-        <dd>{{ level_bar(project.value_score) }}<span class="metric-val">{{ project.value_score }}/5</span></dd>
-      </div>
-      <div class="metric-row">
-        <dt>AI 接管</dt>
-        <dd>{{ level_bar(project.ai_delegation_level) }}<span class="metric-val">{{ project.ai_delegation_level }}/5</span></dd>
-      </div>
-      <div class="metric-row metric-row--human">
-        <dt>人工介入</dt>
-        <dd>{{ level_bar(project.human_intervention_level) }}<span class="metric-val">{{ project.human_intervention_level }}/5</span></dd>
-      </div>
-    </dl>
+    <h2>档案备注</h2>
     <div class="control-notes">
       <div>
-        <span>当前风险</span>
-        <p>{{ project.risk_note or '暂无风险记录' }}</p>
+        <span>最近进展</span>
+        <p>{{ project.latest_update or '缺少记录' }}</p>
       </div>
       <div>
         <span>项目约束</span>
-        <p>{{ project.constraint or '暂无项目约束' }}</p>
+        <p>{{ project.constraint or '缺少记录' }}</p>
       </div>
+      {% if project.risk_note %}
+      <div>
+        <span>风险记录（用户/历史存档）</span>
+        <p>{{ project.risk_note }}</p>
+      </div>
+      {% endif %}
     </div>
   </div>
 
   <div class="detail-card detail-card--wide">
     <h2>关键记忆</h2>
     <div class="memory-list-grid">
-      <div class="memory-list-block">
-        <h3>关键判断</h3>
-        {% if project.key_judgements %}
-        <ul>
-          {% for item in project.key_judgements %}
-          <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
-        {% else %}
-        <p class="empty-inline">暂无关键判断</p>
-        {% endif %}
-      </div>
       <div class="memory-list-block">
         <h3>已验证事实</h3>
         {% if project.validated_facts %}
@@ -101,11 +74,11 @@
           {% endfor %}
         </ul>
         {% else %}
-        <p class="empty-inline">暂无已验证事实</p>
+        <p class="empty-inline">缺少记录</p>
         {% endif %}
       </div>
       <div class="memory-list-block">
-        <h3>未验证问题</h3>
+        <h3>待用户确认</h3>
         {% if project.open_questions %}
         <ul>
           {% for item in project.open_questions %}
@@ -113,15 +86,20 @@
           {% endfor %}
         </ul>
         {% else %}
-        <p class="empty-inline">暂无未验证问题</p>
+        <p class="empty-inline">暂无开放问题</p>
         {% endif %}
       </div>
+      {% if project.key_judgements %}
+      <div class="memory-list-block memory-list-block--legacy">
+        <h3>历史判断（legacy）</h3>
+        <ul>
+          {% for item in project.key_judgements %}
+          <li>{{ item }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
     </div>
-  </div>
-
-  <div class="detail-card detail-card--wide">
-    <h2>最近进展</h2>
-    <p>{{ project.latest_update or '暂无最近进展' }}</p>
   </div>
 
   <div class="detail-card detail-card--wide">
@@ -140,8 +118,8 @@
           {% if e.evidence or e.decision or e.next_action %}
           <div class="timeline-meta">
             {% if e.evidence %}<span>依据：{{ e.evidence }}</span>{% endif %}
-            {% if e.decision %}<span>判断：{{ e.decision }}</span>{% endif %}
-            {% if e.next_action %}<span>下一步：{{ e.next_action }}</span>{% endif %}
+            {% if e.decision %}<span>记录：{{ e.decision }}</span>{% endif %}
+            {% if e.next_action %}<span>待办：{{ e.next_action }}</span>{% endif %}
           </div>
           {% endif %}
         </div>
@@ -154,7 +132,7 @@
   </div>
 
   <div class="detail-card detail-card--meta">
-    <span class="meta-label">更新时间</span>
+    <span class="meta-label">最近更新</span>
     <span class="meta-value">{{ project.updated_at or '—' }}</span>
   </div>
 </section>

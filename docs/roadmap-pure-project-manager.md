@@ -1,6 +1,6 @@
 # Roadmap：将 AI 项目管家收敛为纯项目经理
 
-> 状态：待执行
+> 状态：执行中（Step 0–1 已完成）
 >
 > 创建日期：2026-06-23
 >
@@ -57,26 +57,26 @@
 
 ### 前置条件
 
-- [ ] 工作目录为仓库根目录。
-- [ ] 已阅读 `AGENTS.md`、`skills/project-manager-upgrader/SKILL.md` 和本 Roadmap。
-- [ ] 已确认工作区没有与本 Step 冲突的用户修改。
+- [x] 工作目录为仓库根目录。
+- [x] 已阅读 `AGENTS.md`、`skills/project-manager-upgrader/SKILL.md` 和本 Roadmap。
+- [x] 已确认工作区没有与本 Step 冲突的用户修改。
 
 ### Todo
 
-- [ ] 运行 `git status --short`，把起始状态记录到本 Roadmap 的“执行记录”。
-- [ ] 运行 `uv run python -m compileall app`。
-- [ ] 运行 `node --check app/static/app.js`。
-- [ ] 运行 `uv run python -m app.agent_tools doctor`。
-- [ ] 运行 `uv run python -m app.agent_tools feedback-report`。
-- [ ] 运行 `uv run python -m app.agent_tools export --brief`，确认现有数据可读。
-- [ ] 识别实际 SQLite 文件位置，在 `.agent-workspace/backups/` 创建迁移前备份；不得纳入 Git。
-- [ ] 在“执行记录”中填写命令结果、数据库备份位置和发现的问题。
+- [x] 运行 `git status --short`，把起始状态记录到本 Roadmap 的“执行记录”。
+- [x] 运行 `uv run python -m compileall app`。
+- [x] 运行 `node --check app/static/app.js`。
+- [x] 运行 `uv run python -m app.agent_tools doctor`。
+- [x] 运行 `uv run python -m app.agent_tools feedback-report`。
+- [x] 运行 `uv run python -m app.agent_tools export --brief`，确认现有数据可读。
+- [x] 识别实际 SQLite 文件位置，在 `.agent-workspace/backups/` 创建迁移前备份；不得纳入 Git。
+- [x] 在“执行记录”中填写命令结果、数据库备份位置和发现的问题。
 
 ### 完成定义
 
-- [ ] 所有基线命令通过，或失败项已明确记录且不会影响下一 Step。
-- [ ] 现有项目数据有可恢复备份。
-- [ ] 未修改任何项目业务数据。
+- [x] 所有基线命令通过，或失败项已明确记录且不会影响下一 Step。
+- [x] 现有项目数据有可恢复备份。
+- [x] 未修改任何项目业务数据。
 
 ### 建议 commit
 
@@ -92,7 +92,7 @@
 
 ### 前置条件
 
-- [ ] Step 0 完成。
+- [x] Step 0 完成。
 
 ### 主要文件
 
@@ -102,20 +102,20 @@
 
 ### Todo
 
-- [ ] 在 `docs/product-boundary.md` 写明允许能力、禁止能力、三种运行模式和停止条件。
-- [ ] 为浅沟通写允许示例：复述、澄清、缺口提示、中性选项整理。
-- [ ] 为越界请求写禁止示例：深度研究、方案迭代、替用户选择、项目执行。
-- [ ] 明确 Handoff 输出字段：目标、约束、已确认事实、用户决定、相关文档、开放问题、请求任务。
-- [ ] 在 `docs/record-contract.md` 定义“用户确认”“文档可追溯事实”“Agent 推断”的写入差异。
-- [ ] 明确所有新事实和决定必须具有来源与确认状态。
-- [ ] 明确 `system_judgement`、价值评分、控制建议不属于新写入协议。
-- [ ] 在两个文档顶部加入版本号和最后更新时间。
+- [x] 在 `docs/product-boundary.md` 写明允许能力、禁止能力、三种运行模式和停止条件。
+- [x] 为浅沟通写允许示例：复述、澄清、缺口提示、中性选项整理。
+- [x] 为越界请求写禁止示例：深度研究、方案迭代、替用户选择、项目执行。
+- [x] 明确 Handoff 输出字段：目标、约束、已确认事实、用户决定、相关文档、开放问题、请求任务。
+- [x] 在 `docs/record-contract.md` 定义“用户确认”“文档可追溯事实”“Agent 推断”的写入差异。
+- [x] 明确所有新事实和决定必须具有来源与确认状态。
+- [x] 明确 `system_judgement`、价值评分、控制建议不属于新写入协议。
+- [x] 在两个文档顶部加入版本号和最后更新时间。
 
 ### 验收
 
-- [ ] 新 Agent 只阅读 `product-boundary.md` 即可正确区分 Context / Record / Handoff。
-- [ ] 文档不授权分析、规划、优先级、风险评估或建议路线。
-- [ ] `record-contract.md` 能回答“什么可以写、什么必须先确认”。
+- [x] 新 Agent 只阅读 `product-boundary.md` 即可正确区分 Context / Record / Handoff。
+- [x] 文档不授权分析、规划、优先级、风险评估或建议路线。
+- [x] `record-contract.md` 能回答“什么可以写、什么必须先确认”。
 
 ### 验收命令
 
@@ -579,18 +579,38 @@ Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 
 ## 执行记录
 
-| Step | 状态 | 日期 | Commit | 验证结果 | 备注 |
-|---|---|---|---|---|---|
-| 0 | 待执行 |  |  |  |  |
-| 1 | 待执行 |  |  |  |  |
-| 2 | 待执行 |  |  |  |  |
-| 3 | 待执行 |  |  |  |  |
-| 4 | 待执行 |  |  |  |  |
-| 5 | 待执行 |  |  |  |  |
-| 6 | 待执行 |  |  |  |  |
-| 7 | 待执行 |  |  |  |  |
-| 8 | 待执行 |  |  |  |  |
-| 9 | 待执行 |  |  |  |  |
+**Step 0 起始 `git status --short`：** 干净（无未提交变更）。
+
+**Step 0 基线命令：**
+
+
+| 命令                                                 | 结果                                      |
+| -------------------------------------------------- | --------------------------------------- |
+| `uv run python -m compileall app`                  | 通过                                      |
+| `node --check app/static/app.js`                   | 通过                                      |
+| `uv run python -m app.agent_tools doctor`          | 通过（runtime/skill 0.8.0，7 项检查全绿）         |
+| `uv run python -m app.agent_tools feedback-report` | 通过（30 条 usage，7 条 feedback，8 条 upgrade） |
+| `uv run python -m app.agent_tools export --brief`  | 通过（多项目数据可读）                             |
+
+
+**数据库：** `data/project_control_panel.db`（315392 字节）
+
+**迁移前备份：** `.agent-workspace/backups/project_control_panel-20260623-101104.db`（未纳入 Git）
+
+
+| Step | 状态  | 日期         | Commit | 验证结果 | 备注                                            |
+| ---- | --- | ---------- | ------ | ---- | --------------------------------------------- |
+| 0    | 完成  | 2026-06-23 | —      | 全通过  | 基线 HEAD `0480611`；未改业务数据                      |
+| 1    | 完成  | 2026-06-23 | —      | 验收通过 | 新增 `product-boundary.md`、`record-contract.md` |
+| 2    | 待执行 |            |        |      |                                               |
+| 3    | 待执行 |            |        |      |                                               |
+| 4    | 待执行 |            |        |      |                                               |
+| 5    | 待执行 |            |        |      |                                               |
+| 6    | 待执行 |            |        |      |                                               |
+| 7    | 待执行 |            |        |      |                                               |
+| 8    | 待执行 |            |        |      |                                               |
+| 9    | 待执行 |            |        |      |                                               |
+
 
 ## Roadmap 完成判定
 

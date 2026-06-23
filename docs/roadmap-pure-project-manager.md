@@ -616,7 +616,7 @@ Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 | 6    | 完成  | 2026-06-23 | `b4d8cbc` | 31→48 | provenance（与 Step 7 同 commit） |
 | 7    | 完成  | 2026-06-23 | `b4d8cbc` | 41 passed | project_documents + document_* |
 | 8    | 完成  | 2026-06-23 | `af0b8e6` | 48 passed | legacy 决策字段废弃 + known_risks |
-| 9    | 完成  | 2026-06-23 |        | 51 passed; verify 全绿 | v1.0.0 + verify CLI + e2e smoke |
+| 9    | 完成  | 2026-06-23 | `54fb827` | 51 passed; verify 全绿 | v1.0.0 + verify CLI + e2e smoke |
 | 9    | 待执行 |            |        |      |                                               |
 
 

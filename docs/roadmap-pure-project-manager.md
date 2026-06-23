@@ -1,10 +1,12 @@
 # Roadmap：将 AI 项目管家收敛为纯项目经理
 
-> 状态：已完成（Step 0–9）
+> 状态：Step 0–9 已完成；Step 10 验收修复待执行
 >
 > 创建日期：2026-06-23
 >
-> 当前基线：`158fac3`
+> 完成日期：2026-06-23
+>
+> 验收候选基线：`ee22a47`（v1.0.0，暂未最终验收通过）
 >
 > 目标角色：项目档案管理员 + 上下文编排器 + 轻量会议秘书
 >
@@ -532,7 +534,7 @@ uv run python -m compileall app
 - [x] README 加入最终快速开始和 Handoff 示例。
 - [x] 运行全量验证。
 - [x] 用临时数据库完成一次创建项目、记录事件、登记文档、导出上下文、归档文档的端到端 smoke。
-- [ ] 用真实页面完成一次首页和项目详情的视觉检查。（需人工）
+- [x] 用真实页面完成一次首页和项目详情的视觉检查。
 - [x] 更新版本和变更说明。
 - [x] 在“执行记录”填写最终状态、遗留风险和 deferred work。
 
@@ -561,6 +563,217 @@ git status --short
 
 ---
 
+## Step 10：修复独立验收发现的契约缺口
+
+**优先级：P0/P1**
+
+**目标：** 修复自动化全绿但生产边界仍可被绕过的问题，使 provenance、项目匹配、旧 payload 兼容和首页 legacy 展示与 canonical contract 一致。
+
+### 验收背景
+
+2026-06-23 独立验收结果：
+
+- `uv run python -m app.agent_tools verify`：通过。
+- `uv run pytest -q`：51 passed，2 个 FastAPI lifespan 弃用警告。
+- 首页与项目详情：可正常加载，控制台无 error/warn，布局正常。
+- 结论：**暂不验收通过**。定向对抗探针发现下述 5 个未被现有测试捕获的问题。
+
+### 前置条件
+
+- [ ] 阅读 `docs/product-boundary.md`、`docs/record-contract.md` 和本 Step。
+- [ ] 运行当前 `verify`，确认起始基线仍为 51 passed。
+- [ ] 确认工作区除本 Roadmap 外无其他未说明改动。
+- [ ] 修复过程中不得写入真实项目业务数据；所有复现使用纯函数、Pydantic model 或临时数据库。
+
+### Issue 10.1：混合格式事实绕过 provenance
+
+**严重级别：P0**
+
+**位置：** `app/schemas.py:126-141`、`app/provenance.py:111-139`、`app/contracts/record_guard.py`
+
+当前 `validated_facts` 只要包含任意一个结构化 dict，schema 就进入 embedded 分支并提前返回。混合列表中的普通字符串可缺少对应 provenance，最终在 `merge_facts_with_provenance()` 中被默认保存为 `source_type=user`、`confirmation=confirmed`。
+
+已复现输入：
+
+```python
+{
+    "project_memory_updates": [{
+        "project_name": "X",
+        "validated_facts": [
+            {
+                "text": "有来源事实",
+                "source_type": "document",
+                "confirmation": "confirmed"
+            },
+            "无来源事实"
+        ],
+        "_provenance": [{
+            "source_type": "user",
+            "confirmation": "confirmed"
+        }]
+    }]
+}
+```
+
+当前结果：record guard 无 violation；第二条事实被自动解析为 user/confirmed。
+
+#### Todo
+
+- [ ] 明确选择并记录一种规则：禁止结构化/字符串混用，或逐项严格校验。
+- [ ] 推荐最小实现：若包含结构化事实，则要求所有条目都是结构化事实；否则全部使用字符串 + 等长 `_provenance`。
+- [ ] 将 `has_embedded = any(...)` 改成不会跳过其他条目的逐项校验。
+- [ ] `record_guard` 同步验证混合列表和 provenance 数量，不能只检查“是否存在 provenance”。
+- [ ] `merge_facts_with_provenance()` 不得为新写入缺失来源的字符串默认赋予 user/confirmed。
+- [ ] 添加回归测试：上述 payload 必须被拒绝。
+- [ ] 添加回归测试：全结构化列表、全字符串 + 等长 provenance 均可通过。
+
+#### 完成定义
+
+- [ ] 任意新事实都无法在缺少明确来源时落为 confirmed。
+- [ ] schema、record guard 和持久化合并逻辑对同一输入给出一致结论。
+
+---
+
+### Issue 10.2：模糊项目名可能写入错误项目
+
+**严重级别：P0**
+
+**位置：** `app/services/project_updater.py:46-62`
+
+`match_project()` 当前使用双向子串匹配。已复现：输入项目名 `AI` 会命中已有项目 `AI客服`。所有 rename/update/memory/delete/event/document 操作都复用该函数，因此未知或相似名称可能修改错误项目。
+
+#### Todo
+
+- [ ] 将写操作匹配限制为：精确名称、大小写规范化后的精确名称、显式 `PROJECT_ALIASES`。
+- [ ] 删除写路径中的双向子串匹配。
+- [ ] 如需保留模糊搜索，创建独立只读 helper，仅用于提示候选，不能返回可写目标。
+- [ ] 对 alias 冲突和多候选情况返回明确错误，不取第一个项目。
+- [ ] 添加回归测试：`AI` 不得匹配 `AI客服`。
+- [ ] 添加回归测试：精确名称和显式 alias 仍能正常写入。
+- [ ] 覆盖 event、memory update、archive/delete 和 document operations 的生产 apply 路径。
+
+#### 完成定义
+
+- [ ] 未知或相似项目名只进入 `skipped/invalid`，不会产生数据库变化。
+- [ ] 所有写操作共享同一套安全的精确匹配规则。
+
+---
+
+### Issue 10.3：旧 system_judgement 兼容测试绕过生产守卫
+
+**严重级别：P1**
+
+**位置：** `tests/test_record_contract.py:195-209`、`app/services/apply_control.py:89-117`
+
+现有兼容测试直接调用 `apply_updates(conn, parsed)`，绕过 `apply_raw_json()` 中的 `validate_record_payload()`。因此测试声称旧 payload 可 apply，但真实 CLI/API 路径会因 `forbidden_system_judgement` 拒绝同一 payload。
+
+#### Todo
+
+- [ ] 先做产品选择并写入 `docs/record-contract.md`：旧 payload 是“只可解析”还是“生产 apply 仍兼容”。
+- [ ] 推荐保持 Roadmap 原承诺：旧 payload 可读取和 apply，但忽略/只归档 legacy judgement；新调用方禁止生成。
+- [ ] 兼容逻辑必须位于生产入口，不得只在测试中绕过 guard。
+- [ ] 修改测试，使其通过 `apply_raw_json()` 或 `/api/apply` 验证真实路径。
+- [ ] 添加新 payload 测试：主动发送 judgement 时仍能得到清晰的 deprecated/ignored 语义。
+- [ ] 若选择生产拒绝旧 payload，则同步修改 Roadmap、record contract 和迁移说明，不再声称兼容 apply。
+
+#### 完成定义
+
+- [ ] 文档、record guard、CLI/API 和测试对旧 payload 行为完全一致。
+- [ ] 测试不再直接绕过生产安全入口证明兼容性。
+
+---
+
+### Issue 10.4：known_risks / risk_note 可无来源写入
+
+**严重级别：P1**
+
+**位置：** `app/schemas.py:68-72`、`app/schemas.py:98-110`、`app/contracts/record_guard.py`
+
+`risk_note` 和 `known_risks` 当前为普通字符串字段。以下 payload 无 provenance 也能通过 schema 与 record guard：
+
+```python
+{
+    "project_updates": [{
+        "project_name": "X",
+        "risk_note": "Agent 推断风险"
+    }],
+    "project_memory_updates": [{
+        "project_name": "X",
+        "known_risks": ["Agent 推断风险"]
+    }]
+}
+```
+
+这与 `record-contract.md` 中“risk_note 仅在用户提供并确认写入时更新”不一致。
+
+#### Todo
+
+- [ ] 为 `known_risks` 采用与 validated facts 一致的结构化 provenance，或新增专用 risk provenance。
+- [ ] `risk_note` 若继续保留，必须要求确认元数据；更推荐停止新写入并只从 confirmed known risks 派生展示。
+- [ ] record guard 拒绝无来源风险以及 `confirmation=unconfirmed/legacy` 的新风险。
+- [ ] 迁移旧风险为 legacy，不自动标为用户 confirmed。
+- [ ] 添加 schema、guard、apply 和导出回归测试。
+
+#### 完成定义
+
+- [ ] Agent 推断风险不能直接进入长期档案。
+- [ ] 页面能够区分用户确认风险和 legacy 风险。
+
+---
+
+### Issue 10.5：首页未标记 legacy 建议
+
+**严重级别：P1**
+
+**位置：** `app/templates/index.html:251-254`、`app/templates/project.html:143-147`
+
+项目详情页会为历史 decision 显示 provenance 标签，但首页近期记录直接渲染 `decision` 和 `next_action`。实机验收中，旧 Agent 生成的“应调整为 active”“建议下一步”等内容仍以普通“记录/待办”展示，容易被误认为当前用户决定。
+
+#### Todo
+
+- [ ] 首页 timeline 使用与详情页一致的 provenance 标签。
+- [ ] 对 legacy decision 显示“历史存档”，不使用普通当前决定的视觉权重。
+- [ ] 对无 provenance 的旧 next_action 标记 legacy，或从默认首页隐藏，仅在详情历史中查看。
+- [ ] 不改写或删除历史事件内容。
+- [ ] 扩充 UI smoke：legacy decision/next_action 在首页必须被标记或隐藏。
+- [ ] 浏览器复验首页和至少一个包含 legacy 事件的项目详情。
+
+#### 完成定义
+
+- [ ] 默认首页不会把历史 Agent 控制建议呈现成当前普通记录。
+- [ ] 首页与详情页的 provenance 语义一致。
+
+---
+
+### Step 10 回归测试清单
+
+- [ ] 混合事实 payload 被拒绝，不会默认补 user/confirmed。
+- [ ] 相似项目名无法命中可写目标。
+- [ ] 旧 judgement payload 的生产行为与文档一致。
+- [ ] 无 provenance 风险写入被拒绝。
+- [ ] 首页 legacy 事件有明确历史标签或不在默认视图展示。
+- [ ] `uv run pytest -q` 全部通过，无 xfail 掩盖上述问题。
+- [ ] `uv run python -m app.agent_tools verify` 全绿。
+- [ ] `uv run python -m app.agent_tools doctor` 全绿。
+- [ ] `git diff --check` 通过。
+- [ ] 工作区只包含 Step 10 预期改动。
+
+### Step 10 最终验收
+
+Builder 完成后必须再次请求独立验收。验收者应：
+
+1. 复跑上述 5 个问题场景，不只依赖仓库测试。
+2. 通过真实 `/api/apply` 或 `apply_raw_json()` 验证写路径。
+3. 实机检查首页和项目详情的 legacy 标签。
+4. 确认真实项目数据库未被测试污染。
+5. 将结果填写到“执行记录”，再决定是否恢复“Roadmap 已完成”。
+
+### 建议 commit
+
+`fix: close pure project-manager acceptance gaps`
+
+---
+
 ## 不在本 Roadmap 范围内
 
 - [ ] 不开发独立聊天 UI。
@@ -579,7 +792,8 @@ Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 - [x] **Step 2 已解决（Step 3）：** `system_judgement` 已 optional；单事件无 judgement 可 apply。
 - [x] **Step 2 契约已锁、实现待接：** `record_guard` 已校验 `_provenance`，但 apply 路径尚未强制；Step 6 落地 schema 后接入。
 - [x] **Step 6 已解决：** `record_guard` 已接入 `apply_raw_json`；`validated_facts` 结构化存储；历史字符串事实迁移为 `legacy`。
-- [x] **Step 9 备注：** FastAPI `@app.on_event("startup")` DeprecationWarning 仍非阻塞；首页/详情视觉检查留给人工。
+- [x] **Step 9 备注：** FastAPI `@app.on_event("startup")` DeprecationWarning 仍非阻塞。
+- [x] **视觉验收（人工）：** 首页与项目详情布局、文案与组合快照展示已确认通过（2026-06-23）。
 
 **遗留风险 / deferred：** 物理删除 legacy DB 列（Step 8 评估保留）；`llm.py` / `seed.py` 仍含演示用决策型种子数据；episode 仅最小审计无消费端。
 
@@ -604,29 +818,47 @@ Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 **迁移前备份：** `.agent-workspace/backups/project_control_panel-20260623-101104.db`（未纳入 Git）
 
 
-| Step | 状态  | 日期         | Commit | 验证结果 | 备注                                            |
-| ---- | --- | ---------- | ------ | ---- | --------------------------------------------- |
-| 0    | 完成  | 2026-06-23 | —      | 全通过  | 基线 HEAD `0480611`；未改业务数据                      |
-| 1    | 完成  | 2026-06-23 | `d45fcb6` | 验收通过 | 新增 `product-boundary.md`、`record-contract.md` |
-| 2    | 完成  | 2026-06-23 | `fe556e7` | 12 passed, 1 xfailed | `app/contracts/`、`tests/`、pytest dev 依赖 |
-| 3    | 完成  | 2026-06-23 | `d87dcad` | 17 passed | optional judgement、`change_summary`、`confirm_explicit` |
-| 4    | 完成  | 2026-06-23 | `e6dc92f` | 17 passed；rg 无授权命中 | v0.9.0；四入口链接 canonical contract |
-| 5    | 完成  | 2026-06-23 | `41f1b7f` | 25 passed | context_snapshot + UI smoke |
-| 5+   | 完成  | 2026-06-23 | `b1736eb` | — | 组合快照卡片排版修补 |
-| 6    | 完成  | 2026-06-23 | `b4d8cbc` | 31→48 | provenance（与 Step 7 同 commit） |
-| 7    | 完成  | 2026-06-23 | `b4d8cbc` | 41 passed | project_documents + document_* |
-| 8    | 完成  | 2026-06-23 | `af0b8e6` | 48 passed | legacy 决策字段废弃 + known_risks |
-| 9    | 完成  | 2026-06-23 | `54fb827` | 51 passed; verify 全绿 | v1.0.0 + verify CLI + e2e smoke |
-| 9    | 待执行 |            |        |      |                                               |
+| Step | 状态  | 日期         | Commit    | 验证结果                 | 备注                                                     |
+| ---- | --- | ---------- | --------- | -------------------- | ------------------------------------------------------ |
+| 0    | 完成  | 2026-06-23 | —         | 全通过                  | 基线 HEAD `0480611`；未改业务数据                               |
+| 1    | 完成  | 2026-06-23 | `d45fcb6` | 验收通过                 | 新增 `product-boundary.md`、`record-contract.md`          |
+| 2    | 完成  | 2026-06-23 | `fe556e7` | 12 passed, 1 xfailed | `app/contracts/`、`tests/`、pytest dev 依赖                |
+| 3    | 完成  | 2026-06-23 | `d87dcad` | 17 passed            | optional judgement、`change_summary`、`confirm_explicit` |
+| 4    | 完成  | 2026-06-23 | `e6dc92f` | 17 passed；rg 无授权命中   | v0.9.0；四入口链接 canonical contract                        |
+| 5    | 完成  | 2026-06-23 | `41f1b7f` | 25 passed            | context_snapshot + UI smoke                            |
+| 5+   | 完成  | 2026-06-23 | `b1736eb` | —                    | 组合快照卡片排版修补                                             |
+| 6    | 完成  | 2026-06-23 | `b4d8cbc` | 31→48                | provenance（与 Step 7 同 commit）                          |
+| 7    | 完成  | 2026-06-23 | `b4d8cbc` | 41 passed            | project_documents + document_*                         |
+| 8    | 完成  | 2026-06-23 | `af0b8e6` | 48 passed            | legacy 决策字段废弃 + known_risks                            |
+| 9    | 完成  | 2026-06-23 | `54fb827`/`ee22a47` | 51 passed; verify 全绿；视觉验收通过 | v1.0.0 + verify CLI + e2e smoke |
+| 10   | 待执行 |            |           | 验收未通过               | 修复 provenance、精确项目匹配、兼容路径、风险来源与 legacy UI |
 
+
+## 改造收尾
+
+**验收候选版本：** `1.0.0`（`ee22a47`）；Step 10 完成并经独立复验后再标记最终交付。
+
+**一句话：** 从「会替用户判断的项目助手」收敛为「只维护档案、导出上下文、必要时交接」的纯项目经理运行时。
+
+**关键 commit 链：** `d45fcb6`（边界契约）→ `fe556e7`（契约测试）→ `d87dcad`（去 judgement 依赖）→ `e6dc92f`（三模式入口）→ `41f1b7f`（确定性 UI）→ `b4d8cbc`（来源追溯 + 文档索引）→ `af0b8e6`（废弃决策字段）→ `54fb827`（verify 与交付）
+
+**日常验收：**
+
+```powershell
+uv run python -m app.agent_tools verify
+```
+
+**后续维护：** 见 [maintainer-guide.md](maintainer-guide.md)；框架升级用 `skills/project-manager-upgrader/`，不与项目业务记录混淆。
+
+**已知 deferred（不阻塞 v1.0）：** legacy DB 列保留；`seed.py`/`llm.py` 演示数据仍含历史决策型字段；episode 仅最小 apply 审计。
 
 ## Roadmap 完成判定
 
 - [x] Context、Record、Handoff 三模式均有契约测试。
 - [x] 项目管家不会在独立项目中进行深度思考、内容迭代或代替决策。
-- [x] 项目上下文中的事实和决定都有来源与确认状态。
+- [ ] 项目上下文中的事实、决定和风险都有来源与确认状态。（Step 10）
 - [x] 文档整理是一等能力，且不会扩张为自主内容创作。
-- [x] 首页展示确定性上下文健康信息，不展示 Agent 控制建议。
+- [ ] 首页展示确定性上下文健康信息，legacy Agent 建议不会伪装成当前记录。（Step 10）
 - [x] 普通写入无需 `system_judgement`。
 - [x] 旧项目和历史记录仍可读取。
-- [x] 统一 verify、全量测试和 UI smoke 全部通过。
+- [ ] Step 10 回归测试、统一 verify、全量测试、UI smoke 与独立复验全部通过。

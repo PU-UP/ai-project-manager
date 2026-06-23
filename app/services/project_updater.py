@@ -241,6 +241,8 @@ def append_project_event(
 def apply_deletion(conn, item: ProjectDeletion, project: dict, now: str) -> str:
     reason = item.reason or "由 Agent 根据用户意图处理"
     if item.mode == "delete":
+        if not item.confirm_explicit:
+            raise ValueError("彻底删除需要 confirm_explicit=true")
         conn.execute("DELETE FROM projects WHERE id = ?", (project["id"],))
         return "deleted"
 
@@ -460,3 +462,29 @@ def updates_summary(response: ControlResponse) -> str:
         },
         ensure_ascii=False,
     )
+
+
+def build_change_summary(result: dict) -> str:
+    """中性变更摘要，不含推荐或系统判断。"""
+    parts: list[str] = []
+    labels = (
+        ("created", "创建"),
+        ("renamed", "重命名"),
+        ("updated", "更新"),
+        ("constraint_updated", "约束更新"),
+        ("memory_updated", "记忆更新"),
+        ("archived", "归档"),
+        ("deleted", "删除"),
+        ("events", "事件"),
+    )
+    for key, label in labels:
+        items = result.get(key) or []
+        if items:
+            parts.append(f"{label} {len(items)} 项")
+    skipped = result.get("skipped") or []
+    if skipped:
+        parts.append(f"跳过 {len(skipped)} 项")
+    invalid = result.get("invalid") or []
+    if invalid:
+        parts.append(f"无效 {len(invalid)} 项")
+    return "；".join(parts) if parts else "无变更"

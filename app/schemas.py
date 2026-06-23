@@ -3,7 +3,7 @@
 import json
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from app.models import CONTROL_ACTIONS, PROJECT_EVENT_TYPES, RISK_LEVELS, STATUSES
 
@@ -102,6 +102,13 @@ class ProjectDeletion(BaseModel):
     project_name: str
     mode: Literal["archive", "delete"] = "archive"
     reason: str | None = None
+    confirm_explicit: bool = False
+
+    @model_validator(mode="after")
+    def delete_requires_explicit_confirm(self) -> "ProjectDeletion":
+        if self.mode == "delete" and not self.confirm_explicit:
+            raise ValueError("彻底删除需要 confirm_explicit=true")
+        return self
 
 
 class TopControlRecommendation(BaseModel):
@@ -128,7 +135,14 @@ class ControlResponse(BaseModel):
     project_memory_updates: list[ProjectMemoryUpdate] = Field(default_factory=list)
     project_events: list[ProjectEventInput] = Field(default_factory=list)
     project_deletions: list[ProjectDeletion] = Field(default_factory=list)
-    system_judgement: SystemJudgement
+    system_judgement: SystemJudgement | None = None
+
+    @field_validator("system_judgement", mode="before")
+    @classmethod
+    def empty_judgement_as_none(cls, v):
+        if v == {} or v is None:
+            return None
+        return v
 
     @field_validator("project_updates", mode="before")
     @classmethod

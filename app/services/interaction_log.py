@@ -16,11 +16,12 @@ def save_log(
     conn = get_connection()
     try:
         parsed_summary = updates_summary(response) if response else None
-        system_judgement = (
-            json.dumps(response.system_judgement.model_dump(), ensure_ascii=False)
-            if response
-            else None
-        )
+        system_judgement = None
+        if response and response.system_judgement is not None:
+            system_judgement = json.dumps(
+                response.system_judgement.model_dump(),
+                ensure_ascii=False,
+            )
         now = now_beijing()
         cur = conn.execute(
             """
@@ -50,7 +51,9 @@ def append_jsonl(
             "user_input": user_input,
             "ai_raw_output": ai_raw_output or "",
             "parsed_system_judgement": (
-                response.system_judgement.model_dump() if response else None
+                response.system_judgement.model_dump()
+                if response and response.system_judgement is not None
+                else None
             ),
             "updated_projects": updated_projects,
         }

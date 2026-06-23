@@ -1,6 +1,6 @@
 # Roadmap：将 AI 项目管家收敛为纯项目经理
 
-> 状态：执行中（Step 0–2 已完成）
+> 状态：执行中（Step 0–3 已完成）
 >
 > 创建日期：2026-06-23
 >
@@ -186,8 +186,8 @@ uv run pytest -q
 
 ### 前置条件
 
-- [ ] Step 2 契约测试已存在。
-- [ ] 已确认旧数据备份可恢复。
+- [x] Step 2 契约测试已存在。
+- [x] 已确认旧数据备份可恢复。
 
 ### 主要文件
 
@@ -200,22 +200,22 @@ uv run pytest -q
 
 ### Todo
 
-- [ ] 将 `ControlResponse.system_judgement` 改为过渡期 optional，默认 `None`。
-- [ ] 普通 apply payload 不再需要 `SystemJudgement`。
-- [ ] apply 返回中新增或统一中性 `change_summary`，不生成推荐。
-- [ ] 日志允许 `system_judgement = null`，继续兼容读取旧记录。
-- [ ] episode 不再要求 judgement summary。
-- [ ] 保留旧 payload 的解析兼容，但不要求新调用方继续发送 judgement。
-- [ ] 为 delete 增加独立显式确认字段或危险操作入口。
-- [ ] 更新 schema 测试并确保无 judgement 写入通过。
-- [ ] 不在本 Step 删除数据库旧列。
+- [x] 将 `ControlResponse.system_judgement` 改为过渡期 optional，默认 `None`。
+- [x] 普通 apply payload 不再需要 `SystemJudgement`。
+- [x] apply 返回中新增或统一中性 `change_summary`，不生成推荐。
+- [x] 日志允许 `system_judgement = null`，继续兼容读取旧记录。
+- [x] episode 不再要求 judgement summary。
+- [x] 保留旧 payload 的解析兼容，但不要求新调用方继续发送 judgement。
+- [x] 为 delete 增加独立显式确认字段或危险操作入口。
+- [x] 更新 schema 测试并确保无 judgement 写入通过。
+- [x] 不在本 Step 删除数据库旧列。
 
 ### 完成定义
 
-- [ ] 单事件 payload 无 system judgement 可成功 apply。
-- [ ] 旧 payload 仍可读取和应用。
-- [ ] 新日志不会凭空生成判断。
-- [ ] delete 不能由普通、模糊 payload 触发。
+- [x] 单事件 payload 无 system judgement 可成功 apply。
+- [x] 旧 payload 仍可读取和应用。
+- [x] 新日志不会凭空生成判断。
+- [x] delete 不能由普通、模糊 payload 触发。
 
 ### 验收命令
 
@@ -575,8 +575,8 @@ git status --short
 
 Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 
-- [x] **Step 2 预期失败（待 Step 3）：** `test_single_event_payload_validates_without_system_judgement` — `ControlResponse.system_judgement` 仍为必填；修复 `app/schemas.py` 后移除 xfail。
-- [x] **Step 2 契约已锁、实现待接：** `record_guard` 已校验 `confirm_explicit` 与 `_provenance`，但 `apply_control` / `schemas` 尚未接入；Step 3–6 落地。
+- [x] **Step 2 已解决（Step 3）：** `test_single_event_payload_validates_without_system_judgement` — `system_judgement` 已 optional。
+- [x] **Step 2 契约已锁、实现待接：** `record_guard` 已校验 `_provenance`，但 apply 路径尚未强制；Step 6 落地 schema 后接入。
 
 ## 执行记录
 
@@ -604,7 +604,7 @@ Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 | 0    | 完成  | 2026-06-23 | —      | 全通过  | 基线 HEAD `0480611`；未改业务数据                      |
 | 1    | 完成  | 2026-06-23 | `d45fcb6` | 验收通过 | 新增 `product-boundary.md`、`record-contract.md` |
 | 2    | 完成  | 2026-06-23 | `fe556e7` | 12 passed, 1 xfailed | `app/contracts/`、`tests/`、pytest dev 依赖 |
-| 3    | 待执行 |            |        |      |                                               |
+| 3    | 完成  | 2026-06-23 | 待提交 | 17 passed | optional judgement、`change_summary`、`confirm_explicit` |
 | 4    | 待执行 |            |        |      |                                               |
 | 5    | 待执行 |            |        |      |                                               |
 | 6    | 待执行 |            |        |      |                                               |
@@ -620,6 +620,6 @@ Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 - [ ] 项目上下文中的事实和决定都有来源与确认状态。
 - [ ] 文档整理是一等能力，且不会扩张为自主内容创作。
 - [ ] 首页展示确定性上下文健康信息，不展示 Agent 控制建议。
-- [ ] 普通写入无需 `system_judgement`。
+- [x] 普通写入无需 `system_judgement`。
 - [ ] 旧项目和历史记录仍可读取。
 - [ ] 统一 verify、全量测试和 UI smoke 全部通过。

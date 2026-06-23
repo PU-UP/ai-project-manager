@@ -60,7 +60,9 @@ def append_episode(
             "raw_output": raw_output or "",
             "parsed_summary": updates_summary(parsed) if parsed else None,
             "system_judgement_summary": (
-                parsed.system_judgement.summary if parsed else None
+                parsed.system_judgement.summary
+                if parsed and parsed.system_judgement is not None
+                else None
             ),
             "changed_projects": changed_projects,
             "created": created,

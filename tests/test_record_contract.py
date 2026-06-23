@@ -30,11 +30,6 @@ def _single_event_payload(project_name: str = "已知项目") -> dict:
     }
 
 
-@pytest.mark.xfail(
-    reason="Step 3：ControlResponse.system_judgement 仍为必填；"
-    "修复 app/schemas.py 后移除此 xfail",
-    strict=True,
-)
 def test_single_event_payload_validates_without_system_judgement():
     """只含一个 project event 的 payload 应能校验成功（无 judgement）。"""
     raw = json.dumps(_single_event_payload(), ensure_ascii=False)
@@ -46,6 +41,56 @@ def test_single_event_payload_validates_without_system_judgement():
     assert parsed is not None
     assert len(parsed.project_events) == 1
     assert parsed.system_judgement is None
+
+
+def test_single_event_applies_without_system_judgement(temp_db):
+    """无 system_judgement 的单事件 payload 可成功 apply。"""
+    raw = json.dumps(_single_event_payload(), ensure_ascii=False)
+    parsed, err = parse_control_response(raw)
+    assert err is None
+
+    conn = get_connection()
+    try:
+        result = apply_updates(conn, parsed)
+    finally:
+        conn.close()
+
+    assert "已知项目" in result["events"]
+
+
+def test_delete_without_confirm_explicit_fails_parse():
+    raw = json.dumps(
+        {
+            "project_deletions": [
+                {"project_name": "已知项目", "mode": "delete", "reason": "测试"}
+            ]
+        },
+        ensure_ascii=False,
+    )
+    parsed, err = parse_control_response(raw)
+    assert parsed is None
+    assert err is not None
+    assert "confirm_explicit" in err
+
+
+def test_delete_with_confirm_explicit_parses():
+    raw = json.dumps(
+        {
+            "project_deletions": [
+                {
+                    "project_name": "已知项目",
+                    "mode": "delete",
+                    "confirm_explicit": True,
+                    "reason": "用户明确要求",
+                }
+            ]
+        },
+        ensure_ascii=False,
+    )
+    parsed, err = parse_control_response(raw)
+    assert err is None, err
+    assert parsed is not None
+    assert parsed.project_deletions[0].confirm_explicit is True
 
 
 def test_record_guard_rejects_system_judgement_in_record_payload():
@@ -105,7 +150,7 @@ def test_record_guard_rejects_delete_without_explicit_confirm():
 
 def test_unknown_project_event_does_not_auto_create(temp_db):
     """未知项目仅写 event 时不得自动创建项目。"""
-    from app.schemas import ControlResponse, SystemJudgement
+    from app.schemas import ControlResponse
 
     payload = ControlResponse(
         project_events=[
@@ -115,7 +160,6 @@ def test_unknown_project_event_does_not_auto_create(temp_db):
                 "summary": "不应创建项目",
             }
         ],
-        system_judgement=SystemJudgement(summary="测试"),
     )
     conn = get_connection()
     try:
@@ -147,3 +191,16 @@ def test_event_only_payload_with_judgement_parses_today(temp_db):
         conn.close()
 
     assert "已知项目" in result["events"]
+
+
+def test_apply_returns_neutral_change_summary(temp_db):
+    """apply 返回中性 change_summary，不含系统判断。"""
+    from app.services.apply_control import apply_raw_json
+
+    raw = json.dumps(_single_event_payload(), ensure_ascii=False)
+    result = apply_raw_json(raw, user_input="测试", source="test")
+
+    assert result["ok"] is True
+    assert result["change_summary"] == "事件 1 项"
+    assert result["system_judgement"] is None
+    assert "推荐" not in result["change_summary"]

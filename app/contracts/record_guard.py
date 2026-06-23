@@ -92,8 +92,8 @@ def validate_record_payload(data: dict[str, Any]) -> list[ContractViolation]:
                 _violation(
                     "delete_without_explicit_confirm",
                     f"project_deletions[{idx}] 彻底删除缺少 confirm_explicit",
-                    "在 app/schemas.py ProjectDeletion 增加 confirm_explicit；"
-                    f"见 {CONTRACT_REF} FAQ「删除项目」；Step 3 落地",
+                "在 app/schemas.py ProjectDeletion 增加 confirm_explicit；"
+                f"见 {CONTRACT_REF} FAQ「删除项目」",
                 )
             )
 

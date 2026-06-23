@@ -7,7 +7,7 @@ from app.schemas import ControlResponse
 from app.services.control_parser import parse_control_response
 from app.services.episode_log import append_episode
 from app.services.interaction_log import append_jsonl, save_log
-from app.services.project_updater import apply_updates, updates_summary
+from app.services.project_updater import apply_updates, build_change_summary, updates_summary
 from app.version import get_app_version
 
 
@@ -115,6 +115,11 @@ def apply_raw_json(
         "events": result["events"],
         "skipped": result["skipped"],
         "invalid": result.get("invalid", []),
-        "system_judgement": parsed.system_judgement.model_dump(),
+        "change_summary": build_change_summary(result),
+        "system_judgement": (
+            parsed.system_judgement.model_dump()
+            if parsed.system_judgement is not None
+            else None
+        ),
         "parsed_summary": updates_summary(parsed),
     }

@@ -56,7 +56,7 @@ def migrate_event_provenance_columns(conn: sqlite3.Connection) -> None:
 
 
 def migrate_provenance_data(conn: sqlite3.Connection) -> None:
-    """将历史字符串事实与决策标为 legacy；幂等可重复执行。"""
+    """将历史字符串事实、决定与 next action 标为 legacy；幂等。"""
     project_cols = {
         row["name"]
         for row in conn.execute("PRAGMA table_info(projects)").fetchall()
@@ -98,6 +98,20 @@ def migrate_provenance_data(conn: sqlite3.Connection) -> None:
             prov = legacy_decision_provenance(row["created_at"] or "")
             conn.execute(
                 "UPDATE project_events SET decision_provenance = ? WHERE id = ?",
+                (json.dumps(prov, ensure_ascii=False), row["id"]),
+            )
+    if "next_action" in event_cols and "next_action_provenance" in event_cols:
+        for row in conn.execute(
+            """
+            SELECT id, next_action, next_action_provenance, created_at
+            FROM project_events
+            WHERE next_action != ''
+              AND (next_action_provenance IS NULL OR next_action_provenance = '')
+            """
+        ).fetchall():
+            prov = legacy_decision_provenance(row["created_at"] or "")
+            conn.execute(
+                "UPDATE project_events SET next_action_provenance = ? WHERE id = ?",
                 (json.dumps(prov, ensure_ascii=False), row["id"]),
             )
 

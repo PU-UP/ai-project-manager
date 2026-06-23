@@ -93,10 +93,10 @@ def _short_list(items: list, limit: int = 3) -> list:
 
 
 def _brief_event(event: dict) -> dict:
-    prov = event.get("decision_provenance")
-    prov_brief = None
-    if isinstance(prov, dict):
-        prov_brief = _without_empty(
+    def brief_provenance(prov: dict | None) -> dict | None:
+        if not isinstance(prov, dict):
+            return None
+        return _without_empty(
             {
                 "source_type": prov.get("source_type"),
                 "confirmation": prov.get("confirmation"),
@@ -109,8 +109,13 @@ def _brief_event(event: dict) -> dict:
             "event_type": event.get("event_type"),
             "summary": _short_text(event.get("summary"), 140),
             "decision": _short_text(event.get("decision"), 140),
-            "decision_provenance": prov_brief,
+            "decision_provenance": brief_provenance(
+                event.get("decision_provenance")
+            ),
             "next_action": _short_text(event.get("next_action"), 140),
+            "next_action_provenance": brief_provenance(
+                event.get("next_action_provenance")
+            ),
             "display_at": event.get("display_at"),
         }
     )

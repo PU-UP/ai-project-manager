@@ -154,3 +154,106 @@ def test_risk_writes_require_confirmed_provenance(temp_db):
         assert risk["confirmation"] == "confirmed"
     finally:
         conn.close()
+
+
+def test_next_action_requires_confirmed_provenance_on_production_path(temp_db):
+    missing = apply_raw_json(
+        json.dumps({
+            "project_events": [{
+                "project_name": "已知项目",
+                "event_type": "note",
+                "summary": "会议记录",
+                "next_action": "Agent 建议的下一步",
+            }]
+        }, ensure_ascii=False),
+        user_input="step10.6",
+        source="test",
+    )
+    assert missing["ok"] is False
+
+    unconfirmed = apply_raw_json(
+        json.dumps({
+            "project_events": [{
+                "project_name": "已知项目",
+                "event_type": "note",
+                "summary": "会议记录",
+                "next_action": "待确认下一步",
+                "next_action_provenance": {
+                    "source_type": "document",
+                    "confirmation": "unconfirmed",
+                },
+            }]
+        }, ensure_ascii=False),
+        user_input="step10.6",
+        source="test",
+    )
+    assert unconfirmed["ok"] is False
+
+    legacy = apply_raw_json(
+        json.dumps({
+            "project_events": [{
+                "project_name": "已知项目",
+                "event_type": "note",
+                "summary": "会议记录",
+                "next_action": "伪装历史下一步",
+                "next_action_provenance": {
+                    "source_type": "legacy",
+                    "confirmation": "legacy",
+                },
+            }]
+        }, ensure_ascii=False),
+        user_input="step10.6",
+        source="test",
+    )
+    assert legacy["ok"] is False
+
+
+def test_confirmed_next_action_applies_and_exports_provenance(temp_db):
+    payload = {
+        "project_events": [
+            {
+                "project_name": "已知项目",
+                "event_type": "note",
+                "summary": "用户确认行动",
+                "next_action": "联系供应商",
+                "next_action_provenance": {
+                    "source_type": "user",
+                    "confirmation": "confirmed",
+                    "source_ref": "用户原话",
+                },
+            },
+            {
+                "project_name": "已知项目",
+                "event_type": "note",
+                "summary": "文档确认行动",
+                "next_action": "核对会议纪要",
+                "next_action_provenance": {
+                    "source_type": "document",
+                    "confirmation": "confirmed",
+                    "source_ref": "会议纪要-1",
+                },
+            },
+        ]
+    }
+    result = apply_raw_json(
+        json.dumps(payload, ensure_ascii=False),
+        user_input="step10.6",
+        source="test",
+    )
+    assert result["ok"] is True
+
+    from app.agent_tools import _brief_context
+    from app.services.apply_control import build_context
+
+    events = _brief_context(build_context())["recent_events"]
+    by_action = {event["next_action"]: event for event in events}
+    assert by_action["联系供应商"]["next_action_provenance"] == {
+        "source_type": "user",
+        "confirmation": "confirmed",
+        "source_ref": "用户原话",
+    }
+    assert by_action["核对会议纪要"]["next_action_provenance"] == {
+        "source_type": "document",
+        "confirmation": "confirmed",
+        "source_ref": "会议纪要-1",
+    }

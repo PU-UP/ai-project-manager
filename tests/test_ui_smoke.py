@@ -49,7 +49,10 @@ def test_project_detail_404(client):
 
 
 def test_legacy_decision_and_next_action_are_labeled(client):
+    import json
+
     from app.db import get_connection
+    from app.services.apply_control import apply_raw_json
 
     conn = get_connection()
     try:
@@ -73,6 +76,24 @@ def test_legacy_decision_and_next_action_are_labeled(client):
     finally:
         conn.close()
 
+    confirmed = apply_raw_json(
+        json.dumps({
+            "project_events": [{
+                "project_name": "已知项目",
+                "event_type": "note",
+                "summary": "新行动记录",
+                "next_action": "用户确认下一步",
+                "next_action_provenance": {
+                    "source_type": "user",
+                    "confirmation": "confirmed",
+                },
+            }]
+        }, ensure_ascii=False),
+        user_input="ui smoke",
+        source="test",
+    )
+    assert confirmed["ok"] is True
+
     index = client.get("/").text
     detail = client.get("/project/1").text
     assert "历史风险" in detail
@@ -80,3 +101,6 @@ def test_legacy_decision_and_next_action_are_labeled(client):
         assert "建议调整为 active" in text
         assert "历史存档" in text
         assert "历史待办：建议下一步" in text
+        assert "待办：用户确认下一步" in text
+        assert "历史待办：用户确认下一步" not in text
+        assert "已确认" in text

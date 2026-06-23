@@ -147,7 +147,7 @@
           <div class="timeline-meta">
             {% if e.evidence %}<span>依据：{{ e.evidence }}</span>{% endif %}
             {% if e.decision %}<span>记录：{{ e.decision }}{% if e.decision_provenance %} {{ tag_provenance(e.decision_provenance.source_type, e.decision_provenance.confirmation) }}{% endif %}</span>{% endif %}
-            {% if e.next_action %}<span>历史待办：{{ e.next_action }} {{ tag_provenance('legacy', 'legacy') }}</span>{% endif %}
+            {% if e.next_action %}<span>{% if e.next_action_provenance and e.next_action_provenance.confirmation == 'legacy' %}历史待办{% else %}待办{% endif %}：{{ e.next_action }}{% if e.next_action_provenance %} {{ tag_provenance(e.next_action_provenance.source_type, e.next_action_provenance.confirmation) }}{% endif %}</span>{% endif %}
           </div>
           {% endif %}
         </div>

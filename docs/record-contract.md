@@ -26,7 +26,7 @@
 | `confirmation` | `confirmed` |
 | `source_ref` | 可选：用户原话摘要、会话引用或事件 ID |
 
-**可写入：** `validated_facts`、用户决定（`project_events` 中 `decision`）、`project_updates` 中用户明确要求的 status 变更。
+**可写入：** `validated_facts`、用户决定（`project_events` 中 `decision`）、用户确认行动（`next_action`）、`project_updates` 中用户明确要求的 status 变更。
 
 **示例：** 「我确认暂停 Hermes」「决定把 trip-spark 标为 active」。
 
@@ -128,6 +128,8 @@ Agent 在 Record Mode 输出 **严格 JSON**，顶层可包含：
 兼容规则：生产 CLI/API 仍可接收历史 payload 中的 `system_judgement`，但只在 legacy 交互日志中归档并返回 deprecated/ignored 警告，不把它应用为项目判断，也不在响应中回显为当前判断。新调用方必须省略或传 `null`；普通单事件记录不会触发系统级判断生成。
 
 `validated_facts` 和 `known_risks` 均只允许两种互斥格式：全部使用带 `text/source_type/confirmation` 的结构化条目；或全部使用字符串，并分别附带等长 `_provenance` / `_risk_provenance`。禁止混用。新风险必须为 `confirmed` 且来源为 `user | document | import`；`risk_note` 仅供 legacy 读取，不接受新写入。
+
+`decision` 与 `next_action` 都必须分别附带 `decision_provenance` / `next_action_provenance`。新写入只接受 `source_type=user | document | import` 且 `confirmation=confirmed`；Agent 建议不得进入 `next_action`。历史无来源行动在迁移或读取时标为 `source_type=legacy`、`confirmation=legacy`，只读展示且不丢失。
 
 ---
 

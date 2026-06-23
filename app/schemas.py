@@ -228,18 +228,25 @@ class ProjectEventInput(BaseModel):
     decision: str | None = None
     decision_provenance: DecisionProvenanceInput | None = None
     next_action: str | None = None
+    next_action_provenance: DecisionProvenanceInput | None = None
     happened_at: str | None = None
 
     @model_validator(mode="after")
-    def decision_requires_provenance(self) -> "ProjectEventInput":
-        if not (self.decision or "").strip():
-            return self
-        if self.decision_provenance is None:
-            raise ValueError(
-                "decision 非空时需要 decision_provenance（source_type, confirmation）"
-            )
-        if self.decision_provenance.confirmation == "unconfirmed":
-            raise ValueError("unconfirmed 决定不能写入 decision 字段")
+    def event_fields_require_provenance(self) -> "ProjectEventInput":
+        requirements = (
+            ("decision", self.decision, self.decision_provenance),
+            ("next_action", self.next_action, self.next_action_provenance),
+        )
+        for field_name, value, provenance in requirements:
+            if not (value or "").strip():
+                continue
+            if provenance is None:
+                raise ValueError(
+                    f"{field_name} 非空时需要 {field_name}_provenance"
+                    "（source_type, confirmation）"
+                )
+            if provenance.confirmation != "confirmed":
+                raise ValueError(f"unconfirmed 内容不能写入 {field_name} 字段")
         return self
 
 
@@ -426,11 +433,21 @@ def row_to_event_dict(row) -> dict:
         d["decision_provenance"] = legacy_decision_provenance(str(raw_created_at or ""))
     else:
         d["decision_provenance"] = None
-    d["next_action_provenance"] = (
-        legacy_decision_provenance(str(raw_created_at or ""))
-        if d.get("next_action")
-        else None
-    )
+    raw_next_prov = d.pop("next_action_provenance", "") or ""
+    if raw_next_prov:
+        try:
+            parsed_next = json.loads(raw_next_prov)
+        except (TypeError, json.JSONDecodeError):
+            parsed_next = {}
+        d["next_action_provenance"] = normalize_decision_provenance(
+            parsed_next, str(raw_created_at or "")
+        )
+    elif d.get("next_action"):
+        d["next_action_provenance"] = legacy_decision_provenance(
+            str(raw_created_at or "")
+        )
+    else:
+        d["next_action_provenance"] = None
     if d.get("created_at"):
         d["created_at"] = format_display(d["created_at"], with_seconds=False)
     if d.get("happened_at"):

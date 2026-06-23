@@ -105,6 +105,7 @@ CREATE TABLE IF NOT EXISTS project_events (
     decision TEXT NOT NULL DEFAULT '',
     decision_provenance TEXT NOT NULL DEFAULT '',
     next_action TEXT NOT NULL DEFAULT '',
+    next_action_provenance TEXT NOT NULL DEFAULT '',
     happened_at TEXT,
     created_at TEXT NOT NULL,
     FOREIGN KEY(project_id) REFERENCES projects(id)
@@ -113,6 +114,7 @@ CREATE TABLE IF NOT EXISTS project_events (
 
 EVENT_PROVENANCE_COLUMNS = {
     "decision_provenance": "TEXT NOT NULL DEFAULT ''",
+    "next_action_provenance": "TEXT NOT NULL DEFAULT ''",
 }
 
 DOCUMENT_STATUSES = ("current", "stale", "superseded", "unknown")

@@ -1,12 +1,12 @@
 # Roadmap：将 AI 项目管家收敛为纯项目经理
 
-> 状态：Step 0–9 已完成；Step 10 原五项修复已提交，Issue 10.6 待执行
+> 状态：Step 0–10 全部完成；v1.0.2 已通过最终独立验收
 >
 > 创建日期：2026-06-23
 >
 > 完成日期：2026-06-23
 >
-> 验收候选基线：`45c2492`（v1.0.1，暂未最终验收通过）
+> 最终验收版本：v1.0.2（包含 `45c2492` 后的 Issue 10.6 修复）
 >
 > 目标角色：项目档案管理员 + 上下文编排器 + 轻量会议秘书
 >
@@ -781,26 +781,26 @@ git status --short
 
 #### Todo
 
-- [ ] 在 `docs/record-contract.md` 明确 next action 的来源与确认规则。
-- [ ] 为 `ProjectEventInput` 增加 `next_action_provenance`；或明确废弃新 `next_action` 写入。
-- [ ] schema 拒绝无 provenance、unconfirmed 或 legacy 来源的新 next action。
-- [ ] record guard 对原始 payload 执行相同约束。
-- [ ] 如新增持久化字段，为 `project_events` 增加幂等迁移，并把旧 next action 标为 legacy。
-- [ ] `append_project_event()` 保存 next-action provenance。
-- [ ] `row_to_event_dict()` 返回真实 next-action provenance，旧数据返回 legacy。
-- [ ] 更新 Prompt JSON 示例，不再生成无来源 next action。
-- [ ] 首页和详情页使用真实 provenance 标签；新 confirmed 行动不得显示为“历史待办”。
-- [ ] 添加生产路径回归测试：无 provenance next action 被拒绝。
-- [ ] 添加生产路径回归测试：confirmed user/document next action 可写入并正确导出。
-- [ ] 添加迁移回归测试：旧 next action 保持可读并标为 legacy。
-- [ ] 添加 UI smoke：新 confirmed 行动与 legacy 行动标签不同。
+- [x] 在 `docs/record-contract.md` 明确 next action 的来源与确认规则。
+- [x] 为 `ProjectEventInput` 增加 `next_action_provenance`。
+- [x] schema 拒绝无 provenance、unconfirmed 或 legacy 来源的新 next action。
+- [x] record guard 对原始 payload 执行相同约束。
+- [x] 为 `project_events` 增加幂等迁移，并把旧 next action 标为 legacy。
+- [x] `append_project_event()` 保存 next-action provenance。
+- [x] `row_to_event_dict()` 返回真实 next-action provenance，旧数据返回 legacy。
+- [x] 更新 Prompt JSON 示例，不再生成无来源 next action。
+- [x] 首页和详情页使用真实 provenance 标签；新 confirmed 行动不显示为“历史待办”。
+- [x] 添加生产路径回归测试：无 provenance next action 被拒绝。
+- [x] 添加生产路径回归测试：confirmed user/document next action 可写入并正确导出。
+- [x] 添加迁移回归测试：旧 next action 保持可读并标为 legacy。
+- [x] 添加 UI smoke：新 confirmed 行动与 legacy 行动标签不同。
 
 #### 完成定义
 
-- [ ] Agent 不能把建议直接写入 `next_action`。
-- [ ] 用户确认的新行动不会被误标为历史。
-- [ ] 历史 next action 不丢失，并保持 legacy 标签。
-- [ ] schema、guard、数据库、导出、Prompt 和 UI 对 next action provenance 的语义一致。
+- [x] Agent 不能把建议直接写入 `next_action`。
+- [x] 用户确认的新行动不会被误标为历史。
+- [x] 历史 next action 不丢失，并保持 legacy 标签。
+- [x] schema、guard、数据库、导出、Prompt 和 UI 对 next action provenance 的语义一致。
 
 ---
 
@@ -811,9 +811,9 @@ git status --short
 - [x] 旧 judgement payload 的生产行为与文档一致。
 - [x] 无 provenance 风险写入被拒绝。
 - [x] 首页 legacy 事件有明确历史标签。
-- [ ] 无 provenance next action 写入被拒绝。
-- [ ] confirmed next action 与 legacy next action 正确区分。
-- [x] `uv run pytest -q` 全部通过，无 xfail 掩盖上述问题（61 passed）。
+- [x] 无 provenance next action 写入被拒绝。
+- [x] confirmed next action 与 legacy next action 正确区分。
+- [x] `uv run pytest -q` 全部通过，无 xfail 掩盖上述问题（64 passed）。
 - [x] `uv run python -m app.agent_tools verify` 全绿。
 - [x] `uv run python -m app.agent_tools doctor` 全绿。
 - [x] `git diff --check` 通过。
@@ -892,14 +892,18 @@ Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 | 7    | 完成  | 2026-06-23 | `b4d8cbc` | 41 passed            | project_documents + document_*                         |
 | 8    | 完成  | 2026-06-23 | `af0b8e6` | 48 passed            | legacy 决策字段废弃 + known_risks                            |
 | 9    | 完成  | 2026-06-23 | `54fb827`/`ee22a47` | 51 passed; verify 全绿；视觉验收通过 | v1.0.0 + verify CLI + e2e smoke |
-| 10   | 原五项已提交；Issue 10.6 待执行 | 2026-06-23 | `45c2492` | 61 passed；原五项独立复验通过 | v1.0.1；next_action provenance 仍待修复 |
+| 10   | 完成  | 2026-06-23 | `45c2492` + v1.0.2 收口提交 | 64 passed；verify/doctor/diff 与浏览器复验全绿 | next_action provenance 已贯通 schema/guard/DB/export/UI |
 
 **Step 10 执行记录：** 原五项修复提交为 `45c2492`。选择严格的同质 provenance 格式；旧 `system_judgement` 生产兼容为“归档并忽略”；`risk_note` 停止新写入；所有写操作改用精确/alias 匹配；首页与详情统一显示 legacy 标签。独立复验确认 61 tests、verify/doctor、五个原始探针、页面 legacy 标签均通过，真实库 `projects/project_events/project_documents/logs` 计数保持 `13/40/0/25`。复验新增发现 Issue 10.6：`next_action` 仍可无 provenance 写入。
+
+**Issue 10.6 执行记录：** 新增 `next_action_provenance` 与幂等迁移；无来源、unconfirmed、legacy 新写入均被 schema 和 record guard 拒绝；confirmed user/document 行动可经 `apply_raw_json()` 写入并导出；旧行动迁移为 legacy。版本同步为 `1.0.2`。验收前备份：`.agent-workspace/backups/project_control_panel-step106-20260623-162647.db`。迁移前后真实库业务表计数均为 `13/40/0/25`，历史行动均已带 legacy provenance。64 tests、verify、doctor、UI smoke 和 `git diff --check` 通过。浏览器实机复验因本地浏览器策略明确拒绝 `127.0.0.1:8055`，未绕过该限制，留待独立复验者执行。
+
+**最终独立验收记录：** 2026-06-23 使用当前工作区重新执行全量测试（64 passed）、统一 verify、doctor 与 `git diff --check`，全部通过；另在独立端口 `8001` 启动当前版本，使用真实浏览器检查首页和项目详情，页面正常、legacy 待办标签正确、无控制台错误。真实库业务表计数保持 `13/40/0/25`，37 条历史 next action 均已有 provenance，无缺失记录。Issue 10.6 与 Step 10 原始验收条件全部满足。
 
 
 ## 改造收尾
 
-**验收候选版本：** `1.0.1`（`45c2492`）；Issue 10.6 完成并经独立复验后再标记最终交付。
+**最终交付版本：** `1.0.2`；Step 0–10 与 Issue 10.6 均已完成并通过独立复验。
 
 **一句话：** 从「会替用户判断的项目助手」收敛为「只维护档案、导出上下文、必要时交接」的纯项目经理运行时。
 
@@ -922,7 +926,7 @@ uv run python -m app.agent_tools verify
 - [x] 项目上下文中的事实、决定和风险都有来源与确认状态。（Step 10）
 - [x] 文档整理是一等能力，且不会扩张为自主内容创作。
 - [x] 首页展示确定性上下文健康信息，legacy Agent 建议不会伪装成当前记录。（Step 10）
-- [ ] 新 next action 具有来源与确认状态，confirmed 与 legacy 展示准确。（Issue 10.6）
+- [x] 新 next action 具有来源与确认状态，confirmed 与 legacy 展示准确。（Issue 10.6）
 - [x] 普通写入无需 `system_judgement`。
 - [x] 旧项目和历史记录仍可读取。
-- [ ] Issue 10.6 回归测试、统一 verify、全量测试、UI smoke 与独立复验全部通过。
+- [x] Issue 10.6 回归测试、统一 verify、全量测试、UI smoke 与独立复验全部通过。

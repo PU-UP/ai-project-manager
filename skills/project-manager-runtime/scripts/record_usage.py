@@ -9,7 +9,7 @@ from pathlib import Path
 import tomllib
 
 
-SKILL_VERSION = "1.0.1"
+SKILL_VERSION = "1.0.2"
 ROOT_DIR = Path(__file__).resolve().parents[3]
 USAGE_PATH = ROOT_DIR / ".agent-workspace" / "usage" / "usage.jsonl"
 FRICTION_TYPES = (

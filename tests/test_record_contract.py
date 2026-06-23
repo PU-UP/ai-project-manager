@@ -290,6 +290,29 @@ def test_record_guard_rejects_decision_without_provenance():
     assert any(v.code == "decision_without_provenance" for v in violations)
 
 
+def test_record_guard_rejects_next_action_without_valid_provenance():
+    base = {
+        "project_name": "已知项目",
+        "event_type": "note",
+        "summary": "会议记录",
+        "next_action": "下一步",
+    }
+    missing = validate_record_payload({"project_events": [base]})
+    assert any(v.code == "next_action_without_provenance" for v in missing)
+
+    for provenance in (
+        {"source_type": "document", "confirmation": "unconfirmed"},
+        {"source_type": "legacy", "confirmation": "legacy"},
+    ):
+        invalid = validate_record_payload({
+            "project_events": [{
+                **base,
+                "next_action_provenance": provenance,
+            }]
+        })
+        assert any(v.code == "invalid_next_action_provenance" for v in invalid)
+
+
 def test_schema_rejects_unconfirmed_validated_facts():
     raw = json.dumps(
         {

@@ -191,26 +191,31 @@ def validate_record_payload(data: dict[str, Any]) -> list[ContractViolation]:
     for idx, event in enumerate(data.get("project_events") or []):
         if not isinstance(event, dict):
             continue
-        decision = (event.get("decision") or "").strip()
-        if not decision:
-            continue
-        prov = event.get("decision_provenance")
-        if not prov:
-            violations.append(
-                _violation(
-                    "decision_without_provenance",
-                    f"project_events[{idx}].decision 缺少 decision_provenance",
-                    f"附带 decision_provenance（source_type, confirmation）；"
-                    f"见 {CONTRACT_REF}「来源与确认字段」",
-                )
-            )
-        elif isinstance(prov, dict):
-            if prov.get("confirmation") == "unconfirmed":
+        for field_name in ("decision", "next_action"):
+            value = (event.get(field_name) or "").strip()
+            if not value:
+                continue
+            provenance_name = f"{field_name}_provenance"
+            prov = event.get(provenance_name)
+            if not isinstance(prov, dict):
                 violations.append(
                     _violation(
-                        "unconfirmed_decision",
-                        f"project_events[{idx}].decision_provenance confirmation 为 unconfirmed",
-                        "改用 open_questions 或待用户确认后再写入",
+                        f"{field_name}_without_provenance",
+                        f"project_events[{idx}].{field_name} 缺少 {provenance_name}",
+                        f"附带 {provenance_name}（source_type, confirmation）；"
+                        f"见 {CONTRACT_REF}「来源与确认字段」",
+                    )
+                )
+                continue
+            if (
+                prov.get("source_type") not in ("user", "document", "import")
+                or prov.get("confirmation") != "confirmed"
+            ):
+                violations.append(
+                    _violation(
+                        f"invalid_{field_name}_provenance",
+                        f"project_events[{idx}].{provenance_name} 未确认或来源无效",
+                        "待用户确认后再写入；新写入不得使用 legacy 来源",
                     )
                 )
 

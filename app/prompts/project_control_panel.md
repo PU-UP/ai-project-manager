@@ -125,7 +125,12 @@
         "confirmation": "confirmed",
         "source_ref": "用户原话"
       },
-      "next_action": "下一步（如有）"
+      "next_action": "用户确认的下一步（如有）",
+      "next_action_provenance": {
+        "source_type": "user",
+        "confirmation": "confirmed",
+        "source_ref": "用户原话"
+      }
     }
   ],
   "project_deletions": [
@@ -182,6 +187,7 @@
 - `validated_facts` 须附带 `_provenance`（`source_type`、`confirmation`、`source_ref`）；`confirmation` 为 `confirmed` 才可写入。
 - `known_risks` 须附带等长 `_risk_provenance`，或全部使用内嵌 provenance 的结构化条目；不得与字符串格式混用。
 - `decision` 非空时须附带 `decision_provenance`；未确认内容不得标为 `confirmed`。
+- `next_action` 非空时须附带 `next_action_provenance`；不得把 Agent 建议写入行动字段。
 - `project_deletions` 默认 `mode: "archive"`；彻底删除需 `mode: "delete"` 且 `confirm_explicit: true`。
 - `happened_at` 仅在用户明确给出事件时间时填写；否则省略。
 - 文档：使用 `document_adds` 登记；`document_metadata_updates` 更新元数据；`document_links` 关联引用并校验 URI；`document_archives` 标为 superseded。**不提供**自主重写文档正文。

@@ -78,7 +78,7 @@ uv run pytest -q
 }
 ```
 
-含 `decision` 时须附带 `decision_provenance`；`validated_facts` 须附带 `_provenance`，`known_risks` 须附带 `_risk_provenance`。见 `docs/record-contract.md`。
+含 `decision` / `next_action` 时须分别附带 `decision_provenance` / `next_action_provenance`；`validated_facts` 须附带 `_provenance`，`known_risks` 须附带 `_risk_provenance`。见 `docs/record-contract.md`。
 
 ## Skills
 

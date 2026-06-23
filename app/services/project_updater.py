@@ -243,12 +243,18 @@ def append_project_event(
         prov = item.decision_provenance.model_dump()
         prov["recorded_at"] = now
         decision_prov = json.dumps(prov, ensure_ascii=False)
+    next_action_prov = ""
+    if item.next_action_provenance is not None:
+        prov = item.next_action_provenance.model_dump()
+        prov["recorded_at"] = now
+        next_action_prov = json.dumps(prov, ensure_ascii=False)
     conn.execute(
         """
         INSERT INTO project_events (
             project_id, project_name, event_type, summary, evidence,
-            decision, decision_provenance, next_action, happened_at, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            decision, decision_provenance, next_action, next_action_provenance,
+            happened_at, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             project["id"],
@@ -259,6 +265,7 @@ def append_project_event(
             item.decision or "",
             decision_prov,
             item.next_action or "",
+            next_action_prov,
             item.happened_at,
             now,
         ),

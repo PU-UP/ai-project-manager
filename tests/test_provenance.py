@@ -86,10 +86,18 @@ def legacy_facts_db(tmp_path, monkeypatch):
     conn.execute(
         """
         INSERT INTO project_events (
-            project_id, project_name, event_type, summary, decision, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?)
+            project_id, project_name, event_type, summary, decision, next_action, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
-        (1, "Legacy项目", "decision", "历史决定", "继续观察", "2026-05-01 00:00:00"),
+        (
+            1,
+            "Legacy项目",
+            "decision",
+            "历史决定",
+            "继续观察",
+            "历史下一步",
+            "2026-05-01 00:00:00",
+        ),
     )
     conn.commit()
     conn.close()
@@ -128,6 +136,21 @@ def test_init_db_migrates_legacy_string_facts_idempotent(legacy_facts_db):
         "SELECT decision_provenance FROM project_events WHERE decision != ''"
     ).fetchone()
     assert event2["decision_provenance"] == event["decision_provenance"]
+
+    next_event = conn.execute(
+        "SELECT next_action, next_action_provenance FROM project_events "
+        "WHERE next_action != ''"
+    ).fetchone()
+    assert next_event["next_action"] == "历史下一步"
+    next_prov = json.loads(next_event["next_action_provenance"])
+    assert next_prov["source_type"] == "legacy"
+    assert next_prov["confirmation"] == "legacy"
+
+    init_db(conn)
+    next_event2 = conn.execute(
+        "SELECT next_action_provenance FROM project_events WHERE next_action != ''"
+    ).fetchone()
+    assert next_event2["next_action_provenance"] == next_event["next_action_provenance"]
     conn.close()
 
 

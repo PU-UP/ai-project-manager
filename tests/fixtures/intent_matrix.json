@@ -1,0 +1,44 @@
+{
+  "contract": "docs/product-boundary.md",
+  "version": "1.0.0",
+  "cases": [
+    {
+      "id": "context-recap",
+      "user_input": "X 项目现在记录了什么",
+      "expected_mode": "context",
+      "contract_ref": "docs/product-boundary.md#允许示例",
+      "notes": "复述档案与近期事件，指出缺口"
+    },
+    {
+      "id": "record-organize-meeting-notes",
+      "user_input": "把这段会议纪要整理到 X 项目",
+      "expected_mode": "record",
+      "contract_ref": "docs/product-boundary.md#允许示例",
+      "notes": "用户确认摘要后写入；归类 organize"
+    },
+    {
+      "id": "handoff-deep-research-route",
+      "user_input": "深入研究并决定 X 的路线",
+      "expected_mode": "handoff",
+      "contract_ref": "docs/product-boundary.md#禁止示例",
+      "notes": "深度研究与路线决策超出边界"
+    },
+    {
+      "id": "handoff-iterate-until-best",
+      "user_input": "反复迭代方案直到最好",
+      "expected_mode": "handoff",
+      "contract_ref": "docs/product-boundary.md#禁止示例",
+      "notes": "持续内容迭代循环禁止"
+    },
+    {
+      "id": "record-user-decision",
+      "user_input": "记录这个用户决定",
+      "expected_mode": "record",
+      "contract_ref": "docs/record-contract.md",
+      "notes": "显式记录；不要求 system_judgement",
+      "record_expectations": {
+        "requires_system_judgement": false
+      }
+    }
+  ]
+}

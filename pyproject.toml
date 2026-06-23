@@ -20,6 +20,15 @@ apm-apply = "app.agent_tools:main_apply"
 apm-feedback-report = "app.agent_tools:cmd_feedback_report"
 apm-doctor = "app.agent_tools:cmd_doctor"
 
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+xfail_strict = true
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"

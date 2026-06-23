@@ -1,6 +1,6 @@
 # Roadmap：将 AI 项目管家收敛为纯项目经理
 
-> 状态：执行中（Step 0–1 已完成）
+> 状态：执行中（Step 0–2 已完成）
 >
 > 创建日期：2026-06-23
 >
@@ -139,7 +139,7 @@ git diff --check
 
 ### 前置条件
 
-- [ ] Step 1 完成并已形成 commit。
+- [x] Step 1 完成并已形成 commit。
 
 ### 主要文件
 
@@ -148,23 +148,23 @@ git diff --check
 
 ### Todo
 
-- [ ] 为 intent matrix 建立结构化 fixture。
-- [ ] 添加用例：“X 项目现在记录了什么” → Context。
-- [ ] 添加用例：“把这段会议纪要整理到 X 项目” → Record/organize。
-- [ ] 添加用例：“深入研究并决定 X 的路线” → Handoff。
-- [ ] 添加用例：“反复迭代方案直到最好” → Handoff。
-- [ ] 添加用例：“记录这个用户决定” → Record，且不要求系统判断。
-- [ ] 添加 schema 测试：只包含一个 project event 的 payload 可以校验成功。
-- [ ] 添加安全测试：未知项目不会自动创建。
-- [ ] 添加安全测试：未确认内容不能进入 confirmed facts/user decisions。
-- [ ] 添加安全测试：彻底删除需要独立显式确认标记。
-- [ ] 测试失败信息必须告诉 builder 应修改哪个契约或入口。
+- [x] 为 intent matrix 建立结构化 fixture。
+- [x] 添加用例：“X 项目现在记录了什么” → Context。
+- [x] 添加用例：“把这段会议纪要整理到 X 项目” → Record/organize。
+- [x] 添加用例：“深入研究并决定 X 的路线” → Handoff。
+- [x] 添加用例：“反复迭代方案直到最好” → Handoff。
+- [x] 添加用例：“记录这个用户决定” → Record，且不要求系统判断。
+- [x] 添加 schema 测试：只包含一个 project event 的 payload 可以校验成功。
+- [x] 添加安全测试：未知项目不会自动创建。
+- [x] 添加安全测试：未确认内容不能进入 confirmed facts/user decisions。
+- [x] 添加安全测试：彻底删除需要独立显式确认标记。
+- [x] 测试失败信息必须告诉 builder 应修改哪个契约或入口。
 
 ### 完成定义
 
-- [ ] 测试覆盖三种模式的典型请求。
-- [ ] 测试覆盖无 judgement 写入和来源确认边界。
-- [ ] 当前尚未纠偏的实现允许出现预期失败，但失败清单必须记录；不要为了全绿削弱断言。
+- [x] 测试覆盖三种模式的典型请求。
+- [x] 测试覆盖无 judgement 写入和来源确认边界。
+- [x] 当前尚未纠偏的实现允许出现预期失败，但失败清单必须记录；不要为了全绿削弱断言。
 
 ### 验收命令
 
@@ -575,7 +575,8 @@ git status --short
 
 Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 
-- [ ] 暂无。
+- [x] **Step 2 预期失败（待 Step 3）：** `test_single_event_payload_validates_without_system_judgement` — `ControlResponse.system_judgement` 仍为必填；修复 `app/schemas.py` 后移除 xfail。
+- [x] **Step 2 契约已锁、实现待接：** `record_guard` 已校验 `confirm_explicit` 与 `_provenance`，但 `apply_control` / `schemas` 尚未接入；Step 3–6 落地。
 
 ## 执行记录
 
@@ -602,7 +603,7 @@ Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 | ---- | --- | ---------- | ------ | ---- | --------------------------------------------- |
 | 0    | 完成  | 2026-06-23 | —      | 全通过  | 基线 HEAD `0480611`；未改业务数据                      |
 | 1    | 完成  | 2026-06-23 | `d45fcb6` | 验收通过 | 新增 `product-boundary.md`、`record-contract.md` |
-| 2    | 待执行 |            |        |      |                                               |
+| 2    | 完成  | 2026-06-23 | 待提交 | 12 passed, 1 xfailed | `app/contracts/`、`tests/`、pytest dev 依赖 |
 | 3    | 待执行 |            |        |      |                                               |
 | 4    | 待执行 |            |        |      |                                               |
 | 5    | 待执行 |            |        |      |                                               |
@@ -614,7 +615,7 @@ Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 
 ## Roadmap 完成判定
 
-- [ ] Context、Record、Handoff 三模式均有契约测试。
+- [x] Context、Record、Handoff 三模式均有契约测试。
 - [ ] 项目管家不会在独立项目中进行深度思考、内容迭代或代替决策。
 - [ ] 项目上下文中的事实和决定都有来源与确认状态。
 - [ ] 文档整理是一等能力，且不会扩张为自主内容创作。

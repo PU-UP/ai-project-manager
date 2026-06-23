@@ -12,6 +12,17 @@ TRACKED_STATUSES = frozenset({"active", "maintain", "observe"})
 
 MEMORY_FIELDS = ("origin", "current_goal", "discussion_brief")
 
+MISSING_FIELD_LABELS: dict[str, str] = {
+    "origin": "项目初衷",
+    "current_goal": "当前目标",
+    "discussion_brief": "讨论摘要",
+    "validated_facts_or_open_questions": "已验证事实或开放问题",
+}
+
+
+def missing_field_labels(keys: list[str]) -> list[str]:
+    return [MISSING_FIELD_LABELS.get(key, key) for key in keys]
+
 
 def _missing_memory_fields(project: dict) -> list[str]:
     missing: list[str] = []
@@ -73,7 +84,13 @@ def build_portfolio_snapshot(projects: list[dict]) -> dict:
         if status != "archived":
             missing = _missing_memory_fields(project)
             if missing:
-                missing_memory.append({**entry, "missing_fields": missing})
+                missing_memory.append(
+                    {
+                        **entry,
+                        "missing_fields": missing,
+                        "missing_field_labels": missing_field_labels(missing),
+                    }
+                )
 
         questions = project.get("open_questions") or []
         if questions and status != "archived":

@@ -21,6 +21,8 @@ def test_index_has_snapshot_not_judgement(client):
     assert "假性推进" not in text
     assert "可交给 AI" not in text
     assert "当前判断" not in text
+    assert "validated_facts_or_open_questions" not in text
+    assert "snapshot-list" in text
 
 
 def test_api_snapshot_returns_counts(client):

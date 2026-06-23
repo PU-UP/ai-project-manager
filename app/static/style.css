@@ -181,8 +181,102 @@ body {
 .stat-chip--human .stat-num { color: var(--human); }
 
 /* —— Portfolio snapshot —— */
-.card--snapshot .insight-grid--snapshot {
+.card--snapshot .card-head {
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  align-items: baseline;
+}
+
+.card--snapshot .card-meta {
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.insight-grid--snapshot {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
   margin-bottom: 0;
+}
+
+.insight--snapshot {
+  display: flex;
+  flex-direction: column;
+  min-height: 11rem;
+  padding: 1rem 1.1rem;
+}
+
+.insight--snapshot h3 {
+  margin: 0 0 0.75rem;
+  flex-shrink: 0;
+}
+
+.snapshot-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex: 1;
+}
+
+.snapshot-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.snapshot-item:first-child {
+  padding-top: 0;
+}
+
+.snapshot-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.snapshot-item__name {
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 500;
+  line-height: 1.35;
+  text-decoration: none;
+  word-break: break-word;
+}
+
+.snapshot-item__name:hover {
+  color: var(--accent);
+}
+
+.snapshot-item__meta {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.snapshot-item__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.snapshot-tag {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+
+.snapshot-item--empty {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  border-bottom: none;
+  padding: 0.25rem 0;
 }
 
 .snapshot-status-row {
@@ -211,15 +305,6 @@ body {
 .snapshot-status-label {
   font-size: 0.68rem;
   color: var(--text-muted);
-}
-
-.insight-grid a {
-  color: var(--accent);
-  text-decoration: none;
-}
-
-.insight-grid a:hover {
-  text-decoration: underline;
 }
 
 .memory-list-block--legacy {
@@ -1182,6 +1267,14 @@ body {
 
   .insight-grid {
     grid-template-columns: 1fr;
+  }
+
+  .insight-grid--snapshot {
+    grid-template-columns: 1fr;
+  }
+
+  .insight--snapshot {
+    min-height: 0;
   }
 
   .detail-grid {

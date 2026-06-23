@@ -79,6 +79,7 @@ def test_snapshot_missing_memory_and_open_questions():
     snap = build_portfolio_snapshot(projects)
     assert snap["missing_memory_count"] == 1
     assert snap["missing_memory"][0]["name"] == "Thin"
+    assert "项目初衷" in snap["missing_memory"][0]["missing_field_labels"]
     assert snap["pending_confirmation_count"] == 1
     assert snap["pending_confirmation"][0]["name"] == "Thin"
 

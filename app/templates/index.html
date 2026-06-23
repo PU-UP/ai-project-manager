@@ -77,43 +77,59 @@
   </div>
 
   <div class="insight-grid insight-grid--snapshot">
-    <div class="insight insight--positive">
+    <div class="insight insight--snapshot insight--positive">
       <h3>最近更新</h3>
-      <ul>
+      <ul class="snapshot-list">
         {% for item in snapshot.recently_updated %}
-        <li><a href="/project/{{ item.id }}">{{ item.name }}</a> · {{ item.updated_at or '—' }}</li>
+        <li class="snapshot-item">
+          <a href="/project/{{ item.id }}" class="snapshot-item__name">{{ item.name }}</a>
+          <span class="snapshot-item__meta">{{ item.updated_at or '—' }}</span>
+        </li>
         {% else %}
-        <li class="empty">暂无（{{ snapshot.thresholds.recent_days }} 天内）</li>
+        <li class="snapshot-item snapshot-item--empty">暂无（{{ snapshot.thresholds.recent_days }} 天内）</li>
         {% endfor %}
       </ul>
     </div>
-    <div class="insight insight--warning">
+    <div class="insight insight--snapshot insight--warning">
       <h3>缺少近期更新</h3>
-      <ul>
+      <ul class="snapshot-list">
         {% for item in snapshot.stale_projects %}
-        <li><a href="/project/{{ item.id }}">{{ item.name }}</a> · {{ item.days_since_update }} 天前</li>
+        <li class="snapshot-item">
+          <a href="/project/{{ item.id }}" class="snapshot-item__name">{{ item.name }}</a>
+          <span class="snapshot-item__meta">{{ item.days_since_update }} 天前未更新</span>
+        </li>
         {% else %}
-        <li class="empty">暂无</li>
+        <li class="snapshot-item snapshot-item--empty">暂无</li>
         {% endfor %}
       </ul>
     </div>
-    <div class="insight insight--muted">
+    <div class="insight insight--snapshot insight--muted">
       <h3>缺少记录</h3>
-      <ul>
+      <ul class="snapshot-list">
         {% for item in snapshot.missing_memory %}
-        <li><a href="/project/{{ item.id }}">{{ item.name }}</a> · {{ item.missing_fields | join('、') }}</li>
+        <li class="snapshot-item">
+          <a href="/project/{{ item.id }}" class="snapshot-item__name">{{ item.name }}</a>
+          <div class="snapshot-item__tags">
+            {% for label in item.missing_field_labels %}
+            <span class="snapshot-tag">{{ label }}</span>
+            {% endfor %}
+          </div>
+        </li>
         {% else %}
-        <li class="empty">暂无</li>
+        <li class="snapshot-item snapshot-item--empty">暂无</li>
         {% endfor %}
       </ul>
     </div>
-    <div class="insight insight--human">
+    <div class="insight insight--snapshot insight--human">
       <h3>待用户确认</h3>
-      <ul>
+      <ul class="snapshot-list">
         {% for item in snapshot.pending_confirmation %}
-        <li><a href="/project/{{ item.id }}">{{ item.name }}</a> · {{ item.open_questions_count }} 个开放问题</li>
+        <li class="snapshot-item">
+          <a href="/project/{{ item.id }}" class="snapshot-item__name">{{ item.name }}</a>
+          <span class="snapshot-item__meta">{{ item.open_questions_count }} 个开放问题</span>
+        </li>
         {% else %}
-        <li class="empty">暂无开放问题</li>
+        <li class="snapshot-item snapshot-item--empty">暂无开放问题</li>
         {% endfor %}
       </ul>
     </div>

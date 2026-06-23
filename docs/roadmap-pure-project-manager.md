@@ -607,7 +607,7 @@ Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 | 2    | 完成  | 2026-06-23 | `fe556e7` | 12 passed, 1 xfailed | `app/contracts/`、`tests/`、pytest dev 依赖 |
 | 3    | 完成  | 2026-06-23 | `d87dcad` | 17 passed | optional judgement、`change_summary`、`confirm_explicit` |
 | 4    | 完成  | 2026-06-23 | `e6dc92f` | 17 passed；rg 无授权命中 | v0.9.0；四入口链接 canonical contract |
-| 5    | 待执行 |            |        |      |                                               |
+| 5    | 完成  | 2026-06-23 | `41f1b7f` | 25 passed | context_snapshot + UI smoke |
 | 6    | 待执行 |            |        |      |                                               |
 | 7    | 待执行 |            |        |      |                                               |
 | 8    | 待执行 |            |        |      |                                               |

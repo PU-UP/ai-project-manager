@@ -44,7 +44,7 @@ uv run python -m app.agent_tools export --group-events
 ## 3. Record Mode：apply JSON
 
 - **仅输出严格 JSON**，无 markdown、无解释文字。
-- 顶层字段：`project_creations`、`project_renames`、`project_updates`、`project_constraint_updates`、`project_memory_updates`、`project_events`、`project_deletions`。
+- 顶层字段：`project_creations`、`project_renames`、`project_updates`、`project_constraint_updates`、`project_memory_updates`、`project_events`、`project_deletions`、`document_adds`、`document_metadata_updates`、`document_links`、`document_archives`。
 - **不要**发送 `system_judgement`（已 optional，新写入不需要）。
 - 未知项目不自动创建；彻底删除需 `confirm_explicit: true`。
 - 详细规则见 [docs/record-contract.md](docs/record-contract.md)。
@@ -74,9 +74,12 @@ uv run python -m app.agent_tools apply -f response.json
 ## 6. 辅助与健康检查
 
 ```bash
-uv run python -m app.agent_tools feedback-report
+uv run python -m app.agent_tools verify
 uv run python -m app.agent_tools doctor
+uv run python -m app.agent_tools feedback-report
 ```
+
+维护者说明（usage / episode / 框架升级）：`docs/maintainer-guide.md`
 
 ```http
 GET http://127.0.0.1:8000/api/projects

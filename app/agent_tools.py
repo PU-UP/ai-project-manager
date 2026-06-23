@@ -4,6 +4,7 @@ import argparse
 from collections import defaultdict
 import json
 from pathlib import Path
+import subprocess
 import sys
 
 from app.legacy_fields import project_for_core_export
@@ -250,16 +251,6 @@ def cmd_feedback_report() -> None:
         by_target[item.get("upgrade_target") or "uncategorized"] += 1
         by_severity[item.get("severity") or "uncategorized"] += 1
 
-    recommendations = []
-    if any((r.get("friction_type") == "context_missing") for r in feedback):
-        recommendations.append("考虑使用 export --brief/--group-events 降低上下文阅读成本。")
-    if any((r.get("friction_type") == "workflow_repetitive") for r in feedback):
-        recommendations.append("考虑把重复复盘步骤沉淀为 CLI 命令或专门 skill。")
-    if any((r.get("friction_type") == "prompt_ambiguous") for r in feedback):
-        recommendations.append("考虑强化意图识别规则：项目更新、项目讨论、框架升级要分流。")
-    if any((r.get("friction_type") == "ui_gap") for r in feedback):
-        recommendations.append("考虑将 UI 缺口聚合成小批量 dashboard 优化，而非零散修改。")
-
     report = {
         "usage_path": str(USAGE_PATH),
         "total_usage_records": len(usage),
@@ -272,12 +263,11 @@ def cmd_feedback_report() -> None:
         "latest_feedback": feedback[-10:],
         "latest_upgrades": upgrades[-10:],
         "open_feedback_since_last_upgrade": open_feedback,
-        "recommendations": recommendations,
     }
     print(json.dumps(report, ensure_ascii=False, indent=2))
 
 
-def cmd_doctor() -> None:
+def run_doctor_report() -> dict:
     runtime_version = get_app_version()
     skill_version = _skill_version()
     usage = _read_jsonl(USAGE_PATH)
@@ -300,12 +290,107 @@ def cmd_doctor() -> None:
     add("record_usage_script_exists", SKILL_RECORD_SCRIPT.exists(), str(SKILL_RECORD_SCRIPT))
     add("usage_jsonl_parseable", not any("_invalid" in r for r in usage), f"{len(usage)} records")
 
-    report = {
+    return {
         "ok": all(item["ok"] for item in checks),
         "runtime_version": runtime_version,
         "skill_version": skill_version,
         "checks": checks,
     }
+
+
+def _check_boundary_references() -> tuple[bool, str]:
+    agents_path = ROOT_DIR / "AGENTS.md"
+    skill_path = SKILL_PATH
+    agents_text = agents_path.read_text(encoding="utf-8") if agents_path.exists() else ""
+    skill_text = skill_path.read_text(encoding="utf-8") if skill_path.exists() else ""
+    ok = (
+        "docs/product-boundary.md" in agents_text
+        and "docs/record-contract.md" in agents_text
+        and "docs/product-boundary.md" in skill_text
+        and "docs/record-contract.md" in skill_text
+    )
+    return ok, "AGENTS.md 与 runtime SKILL 链接 canonical contract"
+
+
+def _run_subprocess(cmd: list[str], name: str) -> dict:
+    try:
+        completed = subprocess.run(
+            cmd,
+            cwd=ROOT_DIR,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
+        ok = completed.returncode == 0
+        detail = (completed.stdout or completed.stderr or "").strip()[:500]
+        return {"name": name, "ok": ok, "detail": detail or f"exit {completed.returncode}"}
+    except OSError as exc:
+        return {"name": name, "ok": False, "detail": str(exc)}
+
+
+def cmd_verify(*, quiet: bool = False, quick: bool = False) -> dict:
+    """串联健康检查；返回报告 dict。quick=True 时跳过 pytest（供测试内调用）。"""
+    checks: list[dict] = []
+
+    checks.append(
+        _run_subprocess(
+            [sys.executable, "-m", "compileall", "app"],
+            "python_compile",
+        )
+    )
+
+    if not quick:
+        checks.append(
+            _run_subprocess(
+                [sys.executable, "-m", "pytest", "-q"],
+                "pytest",
+            )
+        )
+
+    js_path = ROOT_DIR / "app" / "static" / "app.js"
+    if js_path.exists():
+        checks.append(
+            _run_subprocess(["node", "--check", str(js_path)], "js_syntax")
+        )
+    else:
+        checks.append({"name": "js_syntax", "ok": False, "detail": "app.js missing"})
+
+    doctor = run_doctor_report()
+    for item in doctor["checks"]:
+        checks.append(item)
+
+    boundary_ok, boundary_detail = _check_boundary_references()
+    checks.append(
+        {"name": "boundary_reference_check", "ok": boundary_ok, "detail": boundary_detail}
+    )
+
+    try:
+        ctx = build_context()
+        export_ok = "projects" in ctx and "runtime" in ctx
+        checks.append(
+            {
+                "name": "export_smoke",
+                "ok": export_ok,
+                "detail": f"projects={len(ctx.get('projects', []))}",
+            }
+        )
+    except Exception as exc:
+        checks.append({"name": "export_smoke", "ok": False, "detail": str(exc)})
+
+    report = {
+        "ok": all(item["ok"] for item in checks),
+        "runtime_version": get_app_version(),
+        "checks": checks,
+    }
+    if not quiet:
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+    return report
+
+
+def cmd_doctor() -> None:
+    report = run_doctor_report()
     print(json.dumps(report, ensure_ascii=False, indent=2))
     sys.exit(0 if report["ok"] else 1)
 
@@ -326,6 +411,14 @@ def main_apply() -> None:
     cmd_apply(args.file, args.stdin)
 
 
+def main_verify() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--quick", action="store_true", help="跳过 pytest")
+    args = parser.parse_args()
+    report = cmd_verify(quick=args.quick)
+    sys.exit(0 if report["ok"] else 1)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="AI项目管家 Agent 工具")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -338,8 +431,10 @@ def main() -> None:
     p_apply.add_argument("--file", "-f", help="JSON 文件路径")
     p_apply.add_argument("--stdin", action="store_true", help="从 stdin 读取")
 
-    sub.add_parser("feedback-report", help="汇总框架使用反馈和升级建议")
+    sub.add_parser("feedback-report", help="汇总框架使用反馈（仅事实）")
     sub.add_parser("doctor", help="检查运行时、技能版本和本地记录健康状态")
+    p_verify = sub.add_parser("verify", help="全量工程健康检查")
+    p_verify.add_argument("--quick", action="store_true", help="跳过 pytest（测试内使用）")
 
     args = parser.parse_args()
     if args.command == "export":
@@ -350,6 +445,9 @@ def main() -> None:
         cmd_feedback_report()
     elif args.command == "doctor":
         cmd_doctor()
+    elif args.command == "verify":
+        report = cmd_verify(quick=getattr(args, "quick", False))
+        sys.exit(0 if report["ok"] else 1)
 
 
 if __name__ == "__main__":

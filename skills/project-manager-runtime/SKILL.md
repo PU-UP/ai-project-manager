@@ -5,7 +5,7 @@ description: Use this repository as a pure project-manager context runtime. Use 
 
 # Project Manager Runtime
 
-Skill version: `0.9.0`
+Skill version: `1.0.0`
 
 Canonical contracts:
 
@@ -57,11 +57,7 @@ Record rules:
 
 5. **Handoff:** output packet fields (`target`, `constraints`, `confirmed_facts`, `user_decisions`, `related_documents`, `open_questions`, `requested_task`) and stop.
 
-6. Optional usage log:
-
-```bash
-uv run python skills/project-manager-runtime/scripts/record_usage.py --action apply --write-mode database --summary "Short summary"
-```
+6. Optional usage log (maintainers): see `docs/maintainer-guide.md`.
 
 ## Guardrails
 

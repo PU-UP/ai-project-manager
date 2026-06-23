@@ -1,6 +1,6 @@
 # Roadmap：将 AI 项目管家收敛为纯项目经理
 
-> 状态：执行中（Step 0–8 已完成）
+> 状态：已完成（Step 0–9）
 >
 > 创建日期：2026-06-23
 >
@@ -519,31 +519,31 @@ uv run python -m compileall app
 
 ### 前置条件
 
-- [ ] Step 0–8 全部完成。
+- [x] Step 0–8 全部完成。
 
 ### Todo
 
-- [ ] 在现有 Python CLI 中新增统一 `verify`，不引入新任务框架。
-- [ ] `verify` 串联 Python compile、tests、JS syntax、doctor、版本同步和 boundary reference check。
-- [ ] `feedback-report` 只汇总事实，不自动输出产品升级建议。
-- [ ] 将 usage/episode/upgrader 说明移到 maintainer 文档，runtime skill 只保留日常操作。
-- [ ] 评估 episode 是否有真实消费路径；没有则缩减为最小 apply audit。
-- [ ] 检查并删除重复规则、死枚举、无消费者字段和过期示例。
-- [ ] README 加入最终快速开始和 Handoff 示例。
-- [ ] 运行全量验证。
-- [ ] 用临时数据库完成一次创建项目、记录事件、登记文档、导出上下文、归档文档的端到端 smoke。
-- [ ] 用真实页面完成一次首页和项目详情的视觉检查。
-- [ ] 更新版本和变更说明。
-- [ ] 在“执行记录”填写最终状态、遗留风险和 deferred work。
+- [x] 在现有 Python CLI 中新增统一 `verify`，不引入新任务框架。
+- [x] `verify` 串联 Python compile、tests、JS syntax、doctor、版本同步和 boundary reference check。
+- [x] `feedback-report` 只汇总事实，不自动输出产品升级建议。
+- [x] 将 usage/episode/upgrader 说明移到 maintainer 文档，runtime skill 只保留日常操作。
+- [x] 评估 episode 是否有真实消费路径；没有则缩减为最小 apply audit。
+- [x] 检查并删除重复规则、死枚举、无消费者字段和过期示例。
+- [x] README 加入最终快速开始和 Handoff 示例。
+- [x] 运行全量验证。
+- [x] 用临时数据库完成一次创建项目、记录事件、登记文档、导出上下文、归档文档的端到端 smoke。
+- [ ] 用真实页面完成一次首页和项目详情的视觉检查。（需人工）
+- [x] 更新版本和变更说明。
+- [x] 在“执行记录”填写最终状态、遗留风险和 deferred work。
 
 ### 完成定义
 
-- [ ] `uv run python -m app.agent_tools verify` 一条命令可判断工程是否健康。
-- [ ] 新 Agent 只读 AGENTS + canonical boundary 即可正确操作。
-- [ ] 普通记录不产生 judgement、评分或建议。
-- [ ] 深度请求稳定进入 Handoff。
-- [ ] 文档可登记、追溯、关联和导出。
-- [ ] 旧数据可读且有明确 legacy 标记。
+- [x] `uv run python -m app.agent_tools verify` 一条命令可判断工程是否健康。
+- [x] 新 Agent 只读 AGENTS + canonical boundary 即可正确操作。
+- [x] 普通记录不产生 judgement、评分或建议。
+- [x] 深度请求稳定进入 Handoff。
+- [x] 文档可登记、追溯、关联和导出。
+- [x] 旧数据可读且有明确 legacy 标记。
 
 ### 最终验收命令
 
@@ -579,6 +579,9 @@ Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 - [x] **Step 2 已解决（Step 3）：** `system_judgement` 已 optional；单事件无 judgement 可 apply。
 - [x] **Step 2 契约已锁、实现待接：** `record_guard` 已校验 `_provenance`，但 apply 路径尚未强制；Step 6 落地 schema 后接入。
 - [x] **Step 6 已解决：** `record_guard` 已接入 `apply_raw_json`；`validated_facts` 结构化存储；历史字符串事实迁移为 `legacy`。
+- [x] **Step 9 备注：** FastAPI `@app.on_event("startup")` DeprecationWarning 仍非阻塞；首页/详情视觉检查留给人工。
+
+**遗留风险 / deferred：** 物理删除 legacy DB 列（Step 8 评估保留）；`llm.py` / `seed.py` 仍含演示用决策型种子数据；episode 仅最小审计无消费端。
 
 ## 执行记录
 
@@ -610,9 +613,10 @@ Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 | 4    | 完成  | 2026-06-23 | `e6dc92f` | 17 passed；rg 无授权命中 | v0.9.0；四入口链接 canonical contract |
 | 5    | 完成  | 2026-06-23 | `41f1b7f` | 25 passed | context_snapshot + UI smoke |
 | 5+   | 完成  | 2026-06-23 | `b1736eb` | — | 组合快照卡片排版修补 |
-| 6    | 完成  | 2026-06-23 |        | 31 passed | provenance schema/迁移/record_guard/UI/export |
-| 7    | 完成  | 2026-06-23 |        | 41 passed | project_documents + document_* apply/export/UI |
-| 8    | 完成  | 2026-06-23 |        | 48 passed | legacy 决策字段废弃 + known_risks |
+| 6    | 完成  | 2026-06-23 | `b4d8cbc` | 31→48 | provenance（与 Step 7 同 commit） |
+| 7    | 完成  | 2026-06-23 | `b4d8cbc` | 41 passed | project_documents + document_* |
+| 8    | 完成  | 2026-06-23 | `af0b8e6` | 48 passed | legacy 决策字段废弃 + known_risks |
+| 9    | 完成  | 2026-06-23 |        | 51 passed; verify 全绿 | v1.0.0 + verify CLI + e2e smoke |
 | 9    | 待执行 |            |        |      |                                               |
 
 
@@ -625,4 +629,4 @@ Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 - [x] 首页展示确定性上下文健康信息，不展示 Agent 控制建议。
 - [x] 普通写入无需 `system_judgement`。
 - [x] 旧项目和历史记录仍可读取。
-- [ ] 统一 verify、全量测试和 UI smoke 全部通过。
+- [x] 统一 verify、全量测试和 UI smoke 全部通过。

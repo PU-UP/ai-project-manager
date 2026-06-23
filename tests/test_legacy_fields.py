@@ -75,6 +75,9 @@ def test_known_risks_memory_update_applies(temp_db):
                 {
                     "project_name": "已知项目",
                     "known_risks": ["用户确认：依赖外部 API 配额"],
+                    "_risk_provenance": [
+                        {"source_type": "user", "confirmation": "confirmed"}
+                    ],
                 }
             ]
         },
@@ -86,7 +89,8 @@ def test_known_risks_memory_update_applies(temp_db):
     conn = get_connection()
     try:
         project = list_projects(conn)[0]
-        assert "用户确认：依赖外部 API 配额" in project["known_risks"]
+        assert project["known_risks"][0]["text"] == "用户确认：依赖外部 API 配额"
+        assert project["known_risks"][0]["confirmation"] == "confirmed"
     finally:
         conn.close()
 
@@ -101,6 +105,34 @@ def test_brief_export_omits_decision_fields(temp_db):
     memory = project.get("memory", {})
     assert "key_judgements" not in memory
     assert "progress_percent" not in memory
+
+
+def test_brief_export_preserves_known_risk_provenance(temp_db):
+    from app.services.apply_control import apply_raw_json
+
+    result = apply_raw_json(
+        json.dumps({
+            "project_memory_updates": [{
+                "project_name": "已知项目",
+                "known_risks": ["外部 API 配额"],
+                "_risk_provenance": [{
+                    "source_type": "user",
+                    "confirmation": "confirmed",
+                    "source_ref": "用户原话",
+                }],
+            }]
+        }, ensure_ascii=False),
+        user_input="测试",
+        source="test",
+    )
+    assert result["ok"] is True
+    risk = _brief_context(build_context())["projects"][0]["memory"]["known_risks"][0]
+    assert risk == {
+        "text": "外部 API 配额",
+        "source_type": "user",
+        "confirmation": "confirmed",
+        "source_ref": "用户原话",
+    }
 
 
 def test_core_export_preserves_legacy_block(temp_db):
@@ -181,7 +213,13 @@ def test_migrate_risk_note_to_known_risks_idempotent(legacy_risk_db):
         "SELECT known_risks FROM projects WHERE name = 'Legacy'"
     ).fetchone()
     risks = json.loads(row["known_risks"])
-    assert risks == ["[legacy] 历史风险说明"]
+    assert risks == [{
+        "text": "历史风险说明",
+        "source_type": "legacy",
+        "source_ref": "",
+        "confirmation": "legacy",
+        "recorded_at": "",
+    }]
     init_db(conn)
     row2 = conn.execute(
         "SELECT known_risks FROM projects WHERE name = 'Legacy'"

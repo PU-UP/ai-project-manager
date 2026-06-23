@@ -11,6 +11,7 @@ from app.provenance import (
     legacy_decision_provenance,
     merge_facts_with_provenance,
     normalize_decision_provenance,
+    parse_known_risks,
     parse_validated_facts,
 )
 
@@ -80,6 +81,8 @@ class ProjectUpdate(BaseModel):
         for field in FORBIDDEN_NEW_WRITE_FIELDS:
             if data.get(field) is not None:
                 raise ValueError(f"{field} 已废弃，不得在新写入中使用")
+        if data.get("risk_note") is not None:
+            raise ValueError("risk_note 仅供 legacy 读取；新风险请使用带 provenance 的 known_risks")
         return data
 
 
@@ -102,12 +105,15 @@ class ProjectMemoryUpdate(BaseModel):
     origin: str | None = None
     current_goal: str | None = None
     progress_note: str | None = None
-    known_risks: list[str] | None = None
+    known_risks: list[str | dict[str, Any]] | None = None
     validated_facts: list[str | dict[str, Any]] | None = None
     open_questions: list[str] | None = None
     discussion_brief: str | None = None
     reason: str | None = None
     provenance: list[ProvenanceInput] | None = Field(default=None, alias="_provenance")
+    risk_provenance: list[ProvenanceInput] | None = Field(
+        default=None, alias="_risk_provenance"
+    )
 
     @model_validator(mode="before")
     @classmethod
@@ -121,38 +127,59 @@ class ProjectMemoryUpdate(BaseModel):
 
     @model_validator(mode="after")
     def validate_validated_facts_provenance(self) -> "ProjectMemoryUpdate":
-        if not self.validated_facts:
-            return self
-        has_embedded = any(
-            isinstance(item, dict) and "text" in item for item in self.validated_facts
+        self._validate_provenance_items(
+            self.validated_facts,
+            self.provenance,
+            "validated_facts",
+            "_provenance",
+            "open_questions",
         )
-        if has_embedded:
-            for item in self.validated_facts:
-                if not isinstance(item, dict):
-                    continue
-                confirmation = item.get("confirmation")
-                if confirmation == "unconfirmed":
-                    raise ValueError(
-                        "unconfirmed 内容不能写入 validated_facts；改用 open_questions"
-                    )
-                source_type = item.get("source_type")
-                if source_type and source_type not in NEW_WRITE_SOURCE_TYPES:
-                    raise ValueError("新写入不能使用 legacy 作为 source_type")
-            return self
-        if not self.provenance:
+        self._validate_provenance_items(
+            self.known_risks,
+            self.risk_provenance,
+            "known_risks",
+            "_risk_provenance",
+            "待用户确认后再写入",
+        )
+        return self
+
+    @staticmethod
+    def _validate_provenance_items(
+        items: list[str | dict[str, Any]] | None,
+        provenance: list[ProvenanceInput] | None,
+        field_name: str,
+        provenance_name: str,
+        fallback: str,
+    ) -> None:
+        if not items:
+            return
+        structured = [isinstance(item, dict) for item in items]
+        if any(structured) and not all(structured):
+            raise ValueError(f"{field_name} 不得混用结构化条目与字符串条目")
+        if all(structured):
+            if provenance:
+                raise ValueError(f"结构化 {field_name} 不应再附带 {provenance_name}")
+            for item in items:
+                assert isinstance(item, dict)
+                if not str(item.get("text") or "").strip():
+                    raise ValueError(f"{field_name} 结构化条目缺少 text")
+                if item.get("source_type") not in NEW_WRITE_SOURCE_TYPES:
+                    raise ValueError(f"{field_name} 新写入必须包含非 legacy source_type")
+                if item.get("confirmation") != "confirmed":
+                    raise ValueError(f"unconfirmed 内容不能写入 {field_name}；{fallback}")
+            return
+        if not provenance:
             raise ValueError(
-                "validated_facts 需要附带 _provenance（source_type, confirmation, source_ref）"
+                f"{field_name} 需要附带 {provenance_name}"
+                "（source_type, confirmation, source_ref）"
             )
-        if len(self.provenance) < len(self.validated_facts):
-            raise ValueError("_provenance 条目数须与 validated_facts 对齐")
-        for prov in self.provenance:
-            if prov.confirmation == "unconfirmed":
-                raise ValueError(
-                    "unconfirmed 内容不能写入 validated_facts；改用 open_questions"
-                )
+        if len(provenance) != len(items):
+            raise ValueError(f"{provenance_name} 条目数须与 {field_name} 完全一致")
+        for prov in provenance:
+            if prov.confirmation != "confirmed":
+                raise ValueError(f"unconfirmed 内容不能写入 {field_name}；{fallback}")
             if prov.source_type not in NEW_WRITE_SOURCE_TYPES:
                 raise ValueError("新写入不能使用 legacy 作为 source_type")
-        return self
 
     def resolved_validated_facts(self, recorded_at: str) -> list[dict[str, Any]] | None:
         if self.validated_facts is None:
@@ -163,6 +190,16 @@ class ProjectMemoryUpdate(BaseModel):
         return merge_facts_with_provenance(
             self.validated_facts, prov_list, recorded_at
         )
+
+    def resolved_known_risks(self, recorded_at: str) -> list[dict[str, Any]] | None:
+        if self.known_risks is None:
+            return None
+        prov_list = (
+            [p.model_dump() for p in self.risk_provenance]
+            if self.risk_provenance
+            else None
+        )
+        return merge_facts_with_provenance(self.known_risks, prov_list, recorded_at)
 
 
 class ProjectCreation(BaseModel):
@@ -329,7 +366,7 @@ def row_to_project_dict(row) -> dict:
     d["key_judgements"] = _parse_string_list(d.get("key_judgements"))
     d["validated_facts"] = parse_validated_facts(d.get("validated_facts"))
     d["open_questions"] = _parse_string_list(d.get("open_questions"))
-    d["known_risks"] = _parse_string_list(d.get("known_risks"))
+    d["known_risks"] = parse_known_risks(d.get("known_risks"))
     if d.get("updated_at"):
         d["updated_at"] = format_display(d["updated_at"], with_seconds=False)
     if d.get("created_at"):
@@ -389,6 +426,11 @@ def row_to_event_dict(row) -> dict:
         d["decision_provenance"] = legacy_decision_provenance(str(raw_created_at or ""))
     else:
         d["decision_provenance"] = None
+    d["next_action_provenance"] = (
+        legacy_decision_provenance(str(raw_created_at or ""))
+        if d.get("next_action")
+        else None
+    )
     if d.get("created_at"):
         d["created_at"] = format_display(d["created_at"], with_seconds=False)
     if d.get("happened_at"):

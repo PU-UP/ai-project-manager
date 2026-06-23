@@ -114,11 +114,25 @@ def merge_facts_with_provenance(
     recorded_at: str,
 ) -> list[dict[str, Any]]:
     """将 validated_facts 文本与 _provenance 伴生数组合并为结构化条目。"""
+    if not facts:
+        return []
+    structured = [is_structured_fact(fact) for fact in facts]
+    if any(structured) and not all(structured):
+        raise ValueError("结构化条目与字符串条目不能混用")
+    if not any(structured) and len(provenance_list or []) != len(facts):
+        raise ValueError("provenance 条目数须与文本条目数完全一致")
+
     merged: list[dict[str, Any]] = []
     prov = provenance_list or []
     for idx, fact in enumerate(facts):
         if is_structured_fact(fact):
             record = normalize_fact_record(fact)
+            if (
+                not record["text"]
+                or record["source_type"] not in NEW_WRITE_SOURCE_TYPES
+                or record["confirmation"] != "confirmed"
+            ):
+                raise ValueError("结构化条目必须包含新写入来源且已确认")
             if not record["recorded_at"]:
                 record["recorded_at"] = recorded_at
             merged.append(record)
@@ -126,9 +140,14 @@ def merge_facts_with_provenance(
         text = fact_text(fact)
         if not text:
             continue
-        prov_item = prov[idx] if idx < len(prov) and isinstance(prov[idx], dict) else {}
-        source_type = prov_item.get("source_type") or "user"
-        confirmation = prov_item.get("confirmation") or "confirmed"
+        prov_item = prov[idx]
+        source_type = prov_item.get("source_type")
+        confirmation = prov_item.get("confirmation")
+        if (
+            source_type not in NEW_WRITE_SOURCE_TYPES
+            or confirmation != "confirmed"
+        ):
+            raise ValueError("文本条目必须附带新写入来源且已确认")
         merged.append(
             {
                 "text": text,
@@ -139,6 +158,15 @@ def merge_facts_with_provenance(
             }
         )
     return merged
+
+
+def parse_known_risks(raw: Any) -> list[dict[str, Any]]:
+    """风险与事实共享同一 provenance 记录形状。"""
+    return parse_validated_facts(raw)
+
+
+def serialize_known_risks(items: list[dict[str, Any]]) -> str:
+    return serialize_validated_facts(items)
 
 
 def confirmation_label(confirmation: str) -> str:

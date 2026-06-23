@@ -218,7 +218,7 @@ def apply_document_operations(
     projects: list[dict],
     renamed_lookup: dict[str, str],
 ) -> dict:
-    from app.services.project_updater import match_project
+    from app.services.project_updater import _match_for_write
 
     added: list[str] = []
     metadata_updated: list[str] = []
@@ -232,9 +232,8 @@ def apply_document_operations(
         lookup_name = renamed_lookup.get(
             _normalize(item.project_name), item.project_name
         )
-        project = match_project(lookup_name, projects)
+        project = _match_for_write(lookup_name, projects, skipped, invalid)
         if not project:
-            skipped.append(item.project_name)
             continue
         try:
             doc_id = add_document(conn, item, project, now)
@@ -246,9 +245,8 @@ def apply_document_operations(
         lookup_name = renamed_lookup.get(
             _normalize(item.project_name), item.project_name
         )
-        project = match_project(lookup_name, projects)
+        project = _match_for_write(lookup_name, projects, skipped, invalid)
         if not project:
-            skipped.append(item.project_name)
             continue
         try:
             title = update_document_metadata(conn, item, project, now)
@@ -260,9 +258,8 @@ def apply_document_operations(
         lookup_name = renamed_lookup.get(
             _normalize(item.project_name), item.project_name
         )
-        project = match_project(lookup_name, projects)
+        project = _match_for_write(lookup_name, projects, skipped, invalid)
         if not project:
-            skipped.append(item.project_name)
             continue
         try:
             title = link_document(conn, item, project, now)
@@ -274,9 +271,8 @@ def apply_document_operations(
         lookup_name = renamed_lookup.get(
             _normalize(item.project_name), item.project_name
         )
-        project = match_project(lookup_name, projects)
+        project = _match_for_write(lookup_name, projects, skipped, invalid)
         if not project:
-            skipped.append(item.project_name)
             continue
         try:
             title = archive_document(conn, item, project, now)

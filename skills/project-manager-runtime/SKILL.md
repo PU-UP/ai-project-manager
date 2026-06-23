@@ -5,7 +5,7 @@ description: Use this repository as a pure project-manager context runtime. Use 
 
 # Project Manager Runtime
 
-Skill version: `1.0.0`
+Skill version: `1.0.1`
 
 Canonical contracts:
 
@@ -53,7 +53,8 @@ Record rules:
 - Do not send `system_judgement`.
 - Unknown projects are not auto-created.
 - Permanent delete requires `confirm_explicit: true` on `project_deletions`.
-- See `docs/record-contract.md` for provenance and confirmation.
+- `validated_facts` uses `_provenance`; `known_risks` uses `_risk_provenance`.
+- See `docs/record-contract.md` for provenance, confirmation, and legacy compatibility.
 
 5. **Handoff:** output packet fields (`target`, `constraints`, `confirmed_facts`, `user_decisions`, `related_documents`, `open_questions`, `requested_task`) and stop.
 

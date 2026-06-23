@@ -171,10 +171,11 @@ def apply_raw_json(
         "skipped": result["skipped"],
         "invalid": result.get("invalid", []),
         "change_summary": build_change_summary(result),
-        "system_judgement": (
-            parsed.system_judgement.model_dump()
+        "system_judgement": None,
+        "warnings": (
+            ["system_judgement 已废弃：本次仅归档 legacy 输入，未应用为项目判断"]
             if parsed.system_judgement is not None
-            else None
+            else []
         ),
         "parsed_summary": updates_summary(parsed),
     }

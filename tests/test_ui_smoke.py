@@ -46,3 +46,37 @@ def test_project_detail_page_loads(client):
 
 def test_project_detail_404(client):
     assert client.get("/project/99999").status_code == 404
+
+
+def test_legacy_decision_and_next_action_are_labeled(client):
+    from app.db import get_connection
+
+    conn = get_connection()
+    try:
+        conn.execute(
+            """
+            UPDATE projects SET known_risks = ? WHERE id = 1
+            """,
+            ('[{"text":"历史风险","source_type":"legacy","source_ref":"",'
+             '"confirmation":"legacy","recorded_at":"2026-01-01"}]',),
+        )
+        conn.execute(
+            """
+            INSERT INTO project_events (
+                project_id, project_name, event_type, summary, decision,
+                decision_provenance, next_action, created_at
+            ) VALUES (1, '已知项目', 'decision', '历史控制记录',
+                      '建议调整为 active', '', '建议下一步', '2026-01-01 10:00:00')
+            """
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+    index = client.get("/").text
+    detail = client.get("/project/1").text
+    assert "历史风险" in detail
+    for text in (index, detail):
+        assert "建议调整为 active" in text
+        assert "历史存档" in text
+        assert "历史待办：建议下一步" in text

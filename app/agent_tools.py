@@ -151,7 +151,7 @@ def _brief_context(ctx: dict, group_events: bool = False) -> dict:
                 "origin": core.get("origin"),
                 "current_goal": core.get("current_goal"),
                 "progress_note": _short_text(core.get("progress_note")),
-                "known_risks": _short_list(core.get("known_risks", [])),
+                "known_risks": _short_fact_list(core.get("known_risks", [])),
                 "validated_facts": _short_fact_list(core.get("validated_facts", [])),
                 "open_questions": _short_list(core.get("open_questions", [])),
                 "discussion_brief": _short_text(core.get("discussion_brief")),

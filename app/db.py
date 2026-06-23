@@ -15,6 +15,7 @@ from app.models import (
 from app.provenance import (
     legacy_decision_provenance,
     legacy_fact_record,
+    normalize_fact_record,
     parse_validated_facts,
     serialize_validated_facts,
 )
@@ -122,15 +123,23 @@ def migrate_known_risks_data(conn: sqlite3.Connection) -> None:
             risks = json.loads(raw)
         except (TypeError, json.JSONDecodeError):
             risks = []
-        if risks:
-            continue
+        migrated: list[dict] = []
+        for risk in risks if isinstance(risks, list) else []:
+            if isinstance(risk, str) and risk.strip():
+                migrated.append(legacy_fact_record(risk.strip()))
+            elif isinstance(risk, dict) and risk.get("text"):
+                migrated.append(normalize_fact_record(risk))
         note = (row["risk_note"] or "").strip()
-        if not note:
+        if not migrated and note:
+            migrated = [legacy_fact_record(note)]
+        if not migrated:
             continue
-        migrated = [f"[legacy] {note}"]
+        serialized = json.dumps(migrated, ensure_ascii=False)
+        if raw == serialized:
+            continue
         conn.execute(
             "UPDATE projects SET known_risks = ? WHERE id = ?",
-            (json.dumps(migrated, ensure_ascii=False), row["id"]),
+            (serialized, row["id"]),
         )
 
 

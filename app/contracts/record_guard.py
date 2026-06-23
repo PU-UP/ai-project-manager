@@ -55,13 +55,61 @@ def _provenance_list(memory_update: dict[str, Any]) -> list[dict[str, Any]]:
     return prov if isinstance(prov, list) else []
 
 
-def _facts_need_provenance(memory_update: dict[str, Any]) -> list[Any]:
-    facts = memory_update.get("validated_facts") or []
-    if not facts:
-        return []
-    if all(isinstance(f, dict) and "text" in f for f in facts):
-        return []
-    return facts
+def _validate_provenance_collection(
+    violations: list[ContractViolation],
+    memory: dict[str, Any],
+    idx: int,
+    field_name: str,
+    provenance_name: str,
+) -> None:
+    invalid_code = (
+        "unconfirmed_validated_facts"
+        if field_name == "validated_facts"
+        else "invalid_known_risks_provenance"
+    )
+    items = memory.get(field_name) or []
+    if not isinstance(items, list) or not items:
+        return
+    provenance = memory.get(provenance_name) or []
+    structured = [isinstance(item, dict) for item in items]
+    if any(structured) and not all(structured):
+        violations.append(_violation(
+            f"mixed_{field_name}_formats",
+            f"project_memory_updates[{idx}].{field_name} 混用了结构化与字符串条目",
+            "所有条目使用结构化 provenance，或全部使用字符串并附带等长来源数组",
+        ))
+        return
+    if all(structured):
+        for item_idx, item in enumerate(items):
+            if (
+                not str(item.get("text") or "").strip()
+                or item.get("source_type") not in ("user", "document", "import")
+                or item.get("confirmation") != "confirmed"
+            ):
+                violations.append(_violation(
+                    invalid_code,
+                    f"project_memory_updates[{idx}].{field_name}[{item_idx}] 缺少有效来源或确认",
+                    f"见 {CONTRACT_REF}「来源与确认字段」",
+                ))
+        return
+    if not isinstance(provenance, list) or len(provenance) != len(items):
+        violations.append(_violation(
+            invalid_code,
+            f"project_memory_updates[{idx}].{field_name} 缺少等长 {provenance_name}",
+            f"见 {CONTRACT_REF}「来源与确认字段」",
+        ))
+        return
+    for prov_idx, prov in enumerate(provenance):
+        if (
+            not isinstance(prov, dict)
+            or prov.get("source_type") not in ("user", "document", "import")
+            or prov.get("confirmation") != "confirmed"
+        ):
+            violations.append(_violation(
+                invalid_code,
+                f"project_memory_updates[{idx}].{provenance_name}[{prov_idx}] 无效",
+                f"见 {CONTRACT_REF}「来源与确认字段」",
+            ))
 
 
 def validate_record_payload(data: dict[str, Any]) -> list[ContractViolation]:
@@ -87,65 +135,15 @@ def validate_record_payload(data: dict[str, Any]) -> list[ContractViolation]:
     if not _is_record_mode_payload(data):
         return violations
 
-    judgement = data.get("system_judgement")
-    if judgement is not None:
-        violations.append(
-            _violation(
-                "forbidden_system_judgement",
-                "Record Mode payload 不应包含 system_judgement",
-                f"移除 system_judgement；见 {CONTRACT_REF}「不可以写」"
-                "；Step 3 将同步 app/schemas.py ControlResponse",
-            )
-        )
-
     for idx, memory in enumerate(data.get("project_memory_updates") or []):
         if not isinstance(memory, dict):
             continue
-        facts = memory.get("validated_facts")
-        needs_prov = _facts_need_provenance(memory)
-        if needs_prov and not _provenance_list(memory):
-            violations.append(
-                _violation(
-                    "unconfirmed_validated_facts",
-                    f"project_memory_updates[{idx}].validated_facts 缺少来源与确认",
-                    f"为每条事实附带 _provenance（source_type, confirmation, source_ref）；"
-                    f"见 {CONTRACT_REF}「来源与确认字段」",
-                )
-            )
-        for prov_idx, prov in enumerate(_provenance_list(memory)):
-            if not isinstance(prov, dict):
-                continue
-            if prov.get("confirmation") == "unconfirmed":
-                violations.append(
-                    _violation(
-                        "unconfirmed_validated_facts",
-                        f"project_memory_updates[{idx}]._provenance[{prov_idx}] "
-                        "confirmation 为 unconfirmed",
-                        "改用 open_questions；见 docs/record-contract.md",
-                    )
-                )
-            if prov.get("source_type") == "legacy":
-                violations.append(
-                    _violation(
-                        "legacy_source_on_new_write",
-                        f"project_memory_updates[{idx}]._provenance[{prov_idx}] "
-                        "新写入不得使用 legacy",
-                        f"见 {CONTRACT_REF}「来源与确认字段」",
-                    )
-                )
-        if isinstance(facts, list):
-            for fact_idx, fact in enumerate(facts):
-                if not isinstance(fact, dict):
-                    continue
-                if fact.get("confirmation") == "unconfirmed":
-                    violations.append(
-                        _violation(
-                            "unconfirmed_validated_facts",
-                            f"project_memory_updates[{idx}].validated_facts[{fact_idx}] "
-                            "confirmation 为 unconfirmed",
-                            "改用 open_questions；见 docs/record-contract.md",
-                        )
-                    )
+        _validate_provenance_collection(
+            violations, memory, idx, "validated_facts", "_provenance"
+        )
+        _validate_provenance_collection(
+            violations, memory, idx, "known_risks", "_risk_provenance"
+        )
         if memory.get("key_judgements"):
             violations.append(
                 _violation(
@@ -219,6 +217,12 @@ def validate_record_payload(data: dict[str, Any]) -> list[ContractViolation]:
     for idx, update in enumerate(data.get("project_updates") or []):
         if not isinstance(update, dict):
             continue
+        if update.get("risk_note") is not None:
+            violations.append(_violation(
+                "risk_note_without_provenance",
+                f"project_updates[{idx}].risk_note 仅供 legacy 读取",
+                "新风险请写入带 _risk_provenance 的 known_risks",
+            ))
         for forbidden in FORBIDDEN_NEW_WRITE_FIELDS:
             if update.get(forbidden) is not None:
                 violations.append(

@@ -1,6 +1,6 @@
 # Roadmap：将 AI 项目管家收敛为纯项目经理
 
-> 状态：Step 0–9 已完成；Step 10 验收修复待执行
+> 状态：Step 0–9 已完成；Step 10 修复与自验完成，待独立验收
 >
 > 创建日期：2026-06-23
 >
@@ -580,10 +580,10 @@ git status --short
 
 ### 前置条件
 
-- [ ] 阅读 `docs/product-boundary.md`、`docs/record-contract.md` 和本 Step。
-- [ ] 运行当前 `verify`，确认起始基线仍为 51 passed。
-- [ ] 确认工作区除本 Roadmap 外无其他未说明改动。
-- [ ] 修复过程中不得写入真实项目业务数据；所有复现使用纯函数、Pydantic model 或临时数据库。
+- [x] 阅读 `docs/product-boundary.md`、`docs/record-contract.md` 和本 Step。
+- [x] 根据独立验收记录确认起始基线为 51 passed，并在修复后复跑 `verify`。
+- [x] 确认起始工作区无其他未说明改动。
+- [x] 修复过程中未写入真实项目业务记录；复现使用纯函数、Pydantic model 或临时数据库。
 
 ### Issue 10.1：混合格式事实绕过 provenance
 
@@ -619,18 +619,18 @@ git status --short
 
 #### Todo
 
-- [ ] 明确选择并记录一种规则：禁止结构化/字符串混用，或逐项严格校验。
-- [ ] 推荐最小实现：若包含结构化事实，则要求所有条目都是结构化事实；否则全部使用字符串 + 等长 `_provenance`。
-- [ ] 将 `has_embedded = any(...)` 改成不会跳过其他条目的逐项校验。
-- [ ] `record_guard` 同步验证混合列表和 provenance 数量，不能只检查“是否存在 provenance”。
-- [ ] `merge_facts_with_provenance()` 不得为新写入缺失来源的字符串默认赋予 user/confirmed。
-- [ ] 添加回归测试：上述 payload 必须被拒绝。
-- [ ] 添加回归测试：全结构化列表、全字符串 + 等长 provenance 均可通过。
+- [x] 明确选择并记录一种规则：禁止结构化/字符串混用，或逐项严格校验。
+- [x] 推荐最小实现：若包含结构化事实，则要求所有条目都是结构化事实；否则全部使用字符串 + 等长 `_provenance`。
+- [x] 将 `has_embedded = any(...)` 改成不会跳过其他条目的逐项校验。
+- [x] `record_guard` 同步验证混合列表和 provenance 数量，不能只检查“是否存在 provenance”。
+- [x] `merge_facts_with_provenance()` 不得为新写入缺失来源的字符串默认赋予 user/confirmed。
+- [x] 添加回归测试：上述 payload 必须被拒绝。
+- [x] 添加回归测试：全结构化列表、全字符串 + 等长 provenance 均可通过。
 
 #### 完成定义
 
-- [ ] 任意新事实都无法在缺少明确来源时落为 confirmed。
-- [ ] schema、record guard 和持久化合并逻辑对同一输入给出一致结论。
+- [x] 任意新事实都无法在缺少明确来源时落为 confirmed。
+- [x] schema、record guard 和持久化合并逻辑对同一输入给出一致结论。
 
 ---
 
@@ -644,18 +644,18 @@ git status --short
 
 #### Todo
 
-- [ ] 将写操作匹配限制为：精确名称、大小写规范化后的精确名称、显式 `PROJECT_ALIASES`。
-- [ ] 删除写路径中的双向子串匹配。
-- [ ] 如需保留模糊搜索，创建独立只读 helper，仅用于提示候选，不能返回可写目标。
-- [ ] 对 alias 冲突和多候选情况返回明确错误，不取第一个项目。
-- [ ] 添加回归测试：`AI` 不得匹配 `AI客服`。
-- [ ] 添加回归测试：精确名称和显式 alias 仍能正常写入。
-- [ ] 覆盖 event、memory update、archive/delete 和 document operations 的生产 apply 路径。
+- [x] 将写操作匹配限制为：精确名称、大小写规范化后的精确名称、显式 `PROJECT_ALIASES`。
+- [x] 删除写路径中的双向子串匹配。
+- [x] 未保留模糊写入搜索；相似名称只作为未匹配项处理。
+- [x] 对 alias 冲突和多候选情况返回明确错误，不取第一个项目。
+- [x] 添加回归测试：`AI` 不得匹配 `AI客服`。
+- [x] 添加回归测试：精确名称和显式 alias 仍能正常写入。
+- [x] 覆盖 event、memory update、archive/delete 和 document operations 的生产 apply 路径。
 
 #### 完成定义
 
-- [ ] 未知或相似项目名只进入 `skipped/invalid`，不会产生数据库变化。
-- [ ] 所有写操作共享同一套安全的精确匹配规则。
+- [x] 未知或相似项目名只进入 `skipped/invalid`，不会产生数据库变化。
+- [x] 所有写操作共享同一套安全的精确匹配规则。
 
 ---
 
@@ -669,17 +669,17 @@ git status --short
 
 #### Todo
 
-- [ ] 先做产品选择并写入 `docs/record-contract.md`：旧 payload 是“只可解析”还是“生产 apply 仍兼容”。
-- [ ] 推荐保持 Roadmap 原承诺：旧 payload 可读取和 apply，但忽略/只归档 legacy judgement；新调用方禁止生成。
-- [ ] 兼容逻辑必须位于生产入口，不得只在测试中绕过 guard。
-- [ ] 修改测试，使其通过 `apply_raw_json()` 或 `/api/apply` 验证真实路径。
-- [ ] 添加新 payload 测试：主动发送 judgement 时仍能得到清晰的 deprecated/ignored 语义。
-- [ ] 若选择生产拒绝旧 payload，则同步修改 Roadmap、record contract 和迁移说明，不再声称兼容 apply。
+- [x] 先做产品选择并写入 `docs/record-contract.md`：旧 payload 是“只可解析”还是“生产 apply 仍兼容”。
+- [x] 保持 Roadmap 原承诺：旧 payload 可读取和 apply，但忽略/只归档 legacy judgement；新调用方禁止生成。
+- [x] 兼容逻辑位于生产入口，不再只在测试中绕过 guard。
+- [x] 修改测试，通过 `apply_raw_json()` 验证真实路径。
+- [x] 添加 payload 测试：主动发送 judgement 时得到清晰的 deprecated/ignored 语义。
+- [x] 未选择生产拒绝旧 payload；无需修改为“只可解析”。
 
 #### 完成定义
 
-- [ ] 文档、record guard、CLI/API 和测试对旧 payload 行为完全一致。
-- [ ] 测试不再直接绕过生产安全入口证明兼容性。
+- [x] 文档、record guard、CLI/API 和测试对旧 payload 行为完全一致。
+- [x] 测试不再直接绕过生产安全入口证明兼容性。
 
 ---
 
@@ -708,16 +708,16 @@ git status --short
 
 #### Todo
 
-- [ ] 为 `known_risks` 采用与 validated facts 一致的结构化 provenance，或新增专用 risk provenance。
-- [ ] `risk_note` 若继续保留，必须要求确认元数据；更推荐停止新写入并只从 confirmed known risks 派生展示。
-- [ ] record guard 拒绝无来源风险以及 `confirmation=unconfirmed/legacy` 的新风险。
-- [ ] 迁移旧风险为 legacy，不自动标为用户 confirmed。
-- [ ] 添加 schema、guard、apply 和导出回归测试。
+- [x] 为 `known_risks` 采用与 validated facts 一致的结构化 provenance，并新增 `_risk_provenance`。
+- [x] `risk_note` 停止新写入，只从带 provenance 的 known risks 展示风险。
+- [x] record guard 拒绝无来源风险以及 `confirmation=unconfirmed/legacy` 的新风险。
+- [x] 迁移旧风险为 legacy，不自动标为用户 confirmed。
+- [x] 添加 schema、guard、apply 和导出回归测试。
 
 #### 完成定义
 
-- [ ] Agent 推断风险不能直接进入长期档案。
-- [ ] 页面能够区分用户确认风险和 legacy 风险。
+- [x] Agent 推断风险不能直接进入长期档案。
+- [x] 页面能够区分用户确认风险和 legacy 风险。
 
 ---
 
@@ -731,32 +731,32 @@ git status --short
 
 #### Todo
 
-- [ ] 首页 timeline 使用与详情页一致的 provenance 标签。
-- [ ] 对 legacy decision 显示“历史存档”，不使用普通当前决定的视觉权重。
-- [ ] 对无 provenance 的旧 next_action 标记 legacy，或从默认首页隐藏，仅在详情历史中查看。
-- [ ] 不改写或删除历史事件内容。
-- [ ] 扩充 UI smoke：legacy decision/next_action 在首页必须被标记或隐藏。
-- [ ] 浏览器复验首页和至少一个包含 legacy 事件的项目详情。
+- [x] 首页 timeline 使用与详情页一致的 provenance 标签。
+- [x] 对 legacy decision 显示“历史存档”，不使用普通当前决定的视觉权重。
+- [x] 对无 provenance 的旧 next_action 标记 legacy。
+- [x] 不改写或删除历史事件内容。
+- [x] 扩充 UI smoke：legacy decision/next_action 在首页被标记。
+- [x] 使用隔离临时数据库浏览器复验首页和包含 legacy 事件的项目详情。
 
 #### 完成定义
 
-- [ ] 默认首页不会把历史 Agent 控制建议呈现成当前普通记录。
-- [ ] 首页与详情页的 provenance 语义一致。
+- [x] 默认首页不会把历史 Agent 控制建议呈现成当前普通记录。
+- [x] 首页与详情页的 provenance 语义一致。
 
 ---
 
 ### Step 10 回归测试清单
 
-- [ ] 混合事实 payload 被拒绝，不会默认补 user/confirmed。
-- [ ] 相似项目名无法命中可写目标。
-- [ ] 旧 judgement payload 的生产行为与文档一致。
-- [ ] 无 provenance 风险写入被拒绝。
-- [ ] 首页 legacy 事件有明确历史标签或不在默认视图展示。
-- [ ] `uv run pytest -q` 全部通过，无 xfail 掩盖上述问题。
-- [ ] `uv run python -m app.agent_tools verify` 全绿。
-- [ ] `uv run python -m app.agent_tools doctor` 全绿。
-- [ ] `git diff --check` 通过。
-- [ ] 工作区只包含 Step 10 预期改动。
+- [x] 混合事实 payload 被拒绝，不会默认补 user/confirmed。
+- [x] 相似项目名无法命中可写目标。
+- [x] 旧 judgement payload 的生产行为与文档一致。
+- [x] 无 provenance 风险写入被拒绝。
+- [x] 首页 legacy 事件有明确历史标签。
+- [x] `uv run pytest -q` 全部通过，无 xfail 掩盖上述问题（61 passed）。
+- [x] `uv run python -m app.agent_tools verify` 全绿。
+- [x] `uv run python -m app.agent_tools doctor` 全绿。
+- [x] `git diff --check` 通过。
+- [x] 工作区只包含 Step 10 预期改动。
 
 ### Step 10 最终验收
 
@@ -831,12 +831,14 @@ Builder 在执行过程中只追加简短记录，不在当前 Step 外扩修：
 | 7    | 完成  | 2026-06-23 | `b4d8cbc` | 41 passed            | project_documents + document_*                         |
 | 8    | 完成  | 2026-06-23 | `af0b8e6` | 48 passed            | legacy 决策字段废弃 + known_risks                            |
 | 9    | 完成  | 2026-06-23 | `54fb827`/`ee22a47` | 51 passed; verify 全绿；视觉验收通过 | v1.0.0 + verify CLI + e2e smoke |
-| 10   | 待执行 |            |           | 验收未通过               | 修复 provenance、精确项目匹配、兼容路径、风险来源与 legacy UI |
+| 10   | 修复与自验完成，待独立验收 | 2026-06-23 | — | 61 passed；verify/doctor/diff 全绿；隔离浏览器复验通过 | v1.0.1；五项验收缺口已修复，真实业务表计数未变化 |
+
+**Step 10 执行记录：** 选择严格的同质 provenance 格式；旧 `system_judgement` 生产兼容为“归档并忽略”；`risk_note` 停止新写入；所有写操作改用精确/alias 匹配；首页与详情统一显示 legacy 标签。验收前备份为 `.agent-workspace/backups/project_control_panel-step10-20260623-155204.db`。修复前后真实库 `projects/project_events/project_documents/logs` 计数均为 `13/40/0/25`，无测试污染。浏览器验收使用 `.agent-workspace/step10-browser/` 隔离数据库，首页与详情控制台无 error/warn。
 
 
 ## 改造收尾
 
-**验收候选版本：** `1.0.0`（`ee22a47`）；Step 10 完成并经独立复验后再标记最终交付。
+**验收候选版本：** `1.0.1`（Step 10 工作区）；经独立复验后再标记最终交付。
 
 **一句话：** 从「会替用户判断的项目助手」收敛为「只维护档案、导出上下文、必要时交接」的纯项目经理运行时。
 
@@ -856,9 +858,9 @@ uv run python -m app.agent_tools verify
 
 - [x] Context、Record、Handoff 三模式均有契约测试。
 - [x] 项目管家不会在独立项目中进行深度思考、内容迭代或代替决策。
-- [ ] 项目上下文中的事实、决定和风险都有来源与确认状态。（Step 10）
+- [x] 项目上下文中的事实、决定和风险都有来源与确认状态。（Step 10）
 - [x] 文档整理是一等能力，且不会扩张为自主内容创作。
-- [ ] 首页展示确定性上下文健康信息，legacy Agent 建议不会伪装成当前记录。（Step 10）
+- [x] 首页展示确定性上下文健康信息，legacy Agent 建议不会伪装成当前记录。（Step 10）
 - [x] 普通写入无需 `system_judgement`。
 - [x] 旧项目和历史记录仍可读取。
 - [ ] Step 10 回归测试、统一 verify、全量测试、UI smoke 与独立复验全部通过。

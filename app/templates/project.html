@@ -55,10 +55,13 @@
       </div>
       {% if project.known_risks %}
       <div>
-        <span>已知风险（用户确认）</span>
-        <ul>
+        <span>已知风险</span>
+        <ul class="provenance-list">
           {% for item in project.known_risks %}
-          <li>{{ item }}</li>
+          <li class="provenance-item provenance-item--{{ item.confirmation }}">
+            <span class="provenance-text">{{ item.text }}</span>
+            {{ tag_provenance(item.source_type, item.confirmation) }}
+          </li>
           {% endfor %}
         </ul>
       </div>
@@ -144,7 +147,7 @@
           <div class="timeline-meta">
             {% if e.evidence %}<span>依据：{{ e.evidence }}</span>{% endif %}
             {% if e.decision %}<span>记录：{{ e.decision }}{% if e.decision_provenance %} {{ tag_provenance(e.decision_provenance.source_type, e.decision_provenance.confirmation) }}{% endif %}</span>{% endif %}
-            {% if e.next_action %}<span>待办：{{ e.next_action }}</span>{% endif %}
+            {% if e.next_action %}<span>历史待办：{{ e.next_action }} {{ tag_provenance('legacy', 'legacy') }}</span>{% endif %}
           </div>
           {% endif %}
         </div>

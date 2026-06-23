@@ -4,7 +4,7 @@ import json
 from app.datetime_util import now_beijing
 from app.legacy_fields import NEUTRAL_DB_DEFAULTS
 from app.models import PROJECT_ALIASES
-from app.provenance import serialize_validated_facts
+from app.provenance import serialize_known_risks, serialize_validated_facts
 from app.services.document_index import apply_document_operations
 from app.schemas import (
     ControlResponse,
@@ -21,7 +21,6 @@ from app.schemas import (
 
 UPDATABLE_FIELDS = (
     "status",
-    "risk_note",
     "latest_update",
 )
 
@@ -44,22 +43,37 @@ def _normalize_name(name: str) -> str:
 
 
 def match_project(name: str, projects: list[dict]) -> dict | None:
-    name = name.strip()
-    for p in projects:
-        if p["name"] == name:
-            return p
-    alias = PROJECT_ALIASES.get(_normalize_name(name))
-    if alias:
-        for p in projects:
-            if p["name"] == alias:
-                return p
     norm = _normalize_name(name)
-    for p in projects:
-        if _normalize_name(p["name"]) == norm:
-            return p
-        if norm in _normalize_name(p["name"]) or _normalize_name(p["name"]) in norm:
-            return p
-    return None
+    exact = [p for p in projects if _normalize_name(p["name"]) == norm]
+    if len(exact) > 1:
+        raise ValueError(f"项目名称匹配不唯一: {name}")
+    if exact:
+        return exact[0]
+    alias = PROJECT_ALIASES.get(norm)
+    if not alias:
+        return None
+    alias_matches = [
+        p for p in projects if _normalize_name(p["name"]) == _normalize_name(alias)
+    ]
+    if len(alias_matches) > 1:
+        raise ValueError(f"项目别名匹配不唯一: {name} -> {alias}")
+    return alias_matches[0] if alias_matches else None
+
+
+def _match_for_write(
+    name: str,
+    projects: list[dict],
+    skipped: list[str],
+    invalid: list[dict],
+) -> dict | None:
+    try:
+        project = match_project(name, projects)
+    except ValueError as exc:
+        invalid.append({"project": name, "error": str(exc)})
+        return None
+    if project is None:
+        skipped.append(name)
+    return project
 
 
 def list_projects(conn) -> list[dict]:
@@ -165,6 +179,12 @@ def update_project_memory(
             if resolved is not None:
                 sets.append(f"{field} = ?")
                 values.append(serialize_validated_facts(resolved))
+            continue
+        if field == "known_risks":
+            resolved = item.resolved_known_risks(now)
+            if resolved is not None:
+                sets.append(f"{field} = ?")
+                values.append(serialize_known_risks(resolved))
             continue
         sets.append(f"{field} = ?")
         values.append(json.dumps(val, ensure_ascii=False))
@@ -284,7 +304,12 @@ def apply_updates(
     now = now_beijing()
 
     for item in response.project_creations:
-        if match_project(item.project_name, projects):
+        try:
+            existing = match_project(item.project_name, projects)
+        except ValueError as exc:
+            invalid.append({"project": item.project_name, "error": str(exc)})
+            continue
+        if existing:
             skipped.append(item.project_name)
             continue
         try:
@@ -297,9 +322,8 @@ def apply_updates(
         projects = list_projects(conn)
 
     for item in response.project_renames:
-        project = match_project(item.project_name, projects)
+        project = _match_for_write(item.project_name, projects, skipped, invalid)
         if not project:
-            skipped.append(item.project_name)
             continue
         try:
             new_name = rename_project(conn, item, project, projects, now)
@@ -315,9 +339,8 @@ def apply_updates(
 
     for item in response.project_updates:
         lookup_name = renamed_lookup.get(_normalize_name(item.project_name), item.project_name)
-        project = match_project(lookup_name, projects)
+        project = _match_for_write(lookup_name, projects, skipped, invalid)
         if not project:
-            skipped.append(item.project_name)
             continue
 
         sets: list[str] = []
@@ -359,9 +382,8 @@ def apply_updates(
 
     for item in response.project_constraint_updates:
         lookup_name = renamed_lookup.get(_normalize_name(item.project_name), item.project_name)
-        project = match_project(lookup_name, projects)
+        project = _match_for_write(lookup_name, projects, skipped, invalid)
         if not project:
-            skipped.append(item.project_name)
             continue
         try:
             constraint_updated.append(update_project_constraint(conn, item, project, now))
@@ -375,9 +397,8 @@ def apply_updates(
 
     for item in response.project_memory_updates:
         lookup_name = renamed_lookup.get(_normalize_name(item.project_name), item.project_name)
-        project = match_project(lookup_name, projects)
+        project = _match_for_write(lookup_name, projects, skipped, invalid)
         if not project:
-            skipped.append(item.project_name)
             continue
         try:
             memory_updated.append(update_project_memory(conn, item, project, now))
@@ -390,8 +411,12 @@ def apply_updates(
                     for field in MEMORY_JSON_FIELDS:
                         val = getattr(item, field, None)
                         if val is not None:
-                            if field == "validated_facts":
-                                resolved = item.resolved_validated_facts(now)
+                            if field in ("validated_facts", "known_risks"):
+                                resolved = (
+                                    item.resolved_validated_facts(now)
+                                    if field == "validated_facts"
+                                    else item.resolved_known_risks(now)
+                                )
                                 if resolved is not None:
                                     p[field] = resolved
                             else:
@@ -403,9 +428,8 @@ def apply_updates(
 
     for item in response.project_deletions:
         lookup_name = renamed_lookup.get(_normalize_name(item.project_name), item.project_name)
-        project = match_project(lookup_name, projects)
+        project = _match_for_write(lookup_name, projects, skipped, invalid)
         if not project:
-            skipped.append(item.project_name)
             continue
         try:
             mode = apply_deletion(conn, item, project, now)
@@ -422,9 +446,8 @@ def apply_updates(
 
     for item in response.project_events:
         lookup_name = renamed_lookup.get(_normalize_name(item.project_name), item.project_name)
-        project = match_project(lookup_name, projects)
+        project = _match_for_write(lookup_name, projects, skipped, invalid)
         if not project:
-            skipped.append(item.project_name)
             continue
         try:
             events.append(append_project_event(conn, item, project, now))

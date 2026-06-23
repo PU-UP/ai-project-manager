@@ -81,7 +81,7 @@ Agent 基于上下文做的解释、归纳、风险提示或建议。
 
 ### 不可以写（新协议）
 
-- `system_judgement`（系统级判断、组合建议、top recommendation）。
+- 新调用方生成的 `system_judgement`（系统级判断、组合建议、top recommendation）。
 - `value_score`、自动 `risk_level` 评级。
 - `control_action` / `control_action_note`（除非未来 schema 明确为用户字面决定且带来源）。
 - `ai_delegation_level`、`human_intervention_level` 等委派建议字段。
@@ -125,7 +125,9 @@ Agent 在 Record Mode 输出 **严格 JSON**，顶层可包含：
 }
 ```
 
-若旧工具链仍接受 `system_judgement`，新调用方应省略或传 `null`；普通单事件记录不应触发系统级判断生成。
+兼容规则：生产 CLI/API 仍可接收历史 payload 中的 `system_judgement`，但只在 legacy 交互日志中归档并返回 deprecated/ignored 警告，不把它应用为项目判断，也不在响应中回显为当前判断。新调用方必须省略或传 `null`；普通单事件记录不会触发系统级判断生成。
+
+`validated_facts` 和 `known_risks` 均只允许两种互斥格式：全部使用带 `text/source_type/confirmation` 的结构化条目；或全部使用字符串，并分别附带等长 `_provenance` / `_risk_provenance`。禁止混用。新风险必须为 `confirmed` 且来源为 `user | document | import`；`risk_note` 仅供 legacy 读取，不接受新写入。
 
 ---
 
@@ -150,7 +152,7 @@ A：可写 `project_events` 类型 `note`，summary 描述讨论发生；不要�
 
 **Q：Agent 能否更新 risk_note？**
 
-A：仅当用户提供了具体风险描述并确认写入；Agent 不得自行评级或改写为系统风险等级。
+A：`risk_note` 已停止新写入。用户提供并确认的具体风险写入带 `_risk_provenance` 的 `known_risks`；Agent 不得自行评级或改写为系统风险等级。
 
 **Q：能否在 apply 里附带「建议继续推进 Y」？**
 

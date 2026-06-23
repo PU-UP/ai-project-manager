@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros.html" import tag_status %}
+{% from "macros.html" import tag_status, tag_provenance %}
 
 {% block title %}AI项目管家{% endblock %}
 
@@ -250,8 +250,8 @@
         <p>{{ e.summary }}</p>
         {% if e.decision or e.next_action %}
         <div class="timeline-meta">
-          {% if e.decision %}<span>记录：{{ e.decision }}</span>{% endif %}
-          {% if e.next_action %}<span>待办：{{ e.next_action }}</span>{% endif %}
+          {% if e.decision %}<span>记录：{{ e.decision }}{% if e.decision_provenance %} {{ tag_provenance(e.decision_provenance.source_type, e.decision_provenance.confirmation) }}{% endif %}</span>{% endif %}
+          {% if e.next_action %}<span>历史待办：{{ e.next_action }} {{ tag_provenance('legacy', 'legacy') }}</span>{% endif %}
         </div>
         {% endif %}
       </div>

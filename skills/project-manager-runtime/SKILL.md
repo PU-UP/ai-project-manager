@@ -5,7 +5,7 @@ description: Use this repository as a pure project-manager context runtime. Use 
 
 # Project Manager Runtime
 
-Skill version: `1.0.2`
+Skill version: `1.0.3`
 
 Canonical contracts:
 

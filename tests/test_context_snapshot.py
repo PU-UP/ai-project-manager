@@ -88,3 +88,16 @@ def test_snapshot_thresholds_exposed():
     snap = build_portfolio_snapshot([])
     assert snap["thresholds"]["recent_days"] == RECENT_DAYS
     assert snap["thresholds"]["stale_days"] == STALE_DAYS
+
+
+def test_snapshot_recently_updated_sorts_by_time_within_same_day():
+    today = datetime.now(BEIJING).strftime("%Y-%m-%d")
+    projects = [
+        {"id": 1, "name": "Morning", "status": "active", "updated_at": f"{today} 09:00"},
+        {"id": 2, "name": "Afternoon", "status": "active", "updated_at": f"{today} 14:20"},
+        {"id": 3, "name": "Noon", "status": "active", "updated_at": f"{today} 12:40"},
+        {"id": 4, "name": "Yesterday", "status": "active", "updated_at": _ts(1)},
+    ]
+    snap = build_portfolio_snapshot(projects)
+    names = [item["name"] for item in snap["recently_updated"]]
+    assert names == ["Afternoon", "Noon", "Morning", "Yesterday"]

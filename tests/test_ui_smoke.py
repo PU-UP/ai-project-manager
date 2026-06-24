@@ -16,6 +16,9 @@ def test_index_has_snapshot_not_judgement(client):
     assert response.status_code == 200
     text = response.text
     assert "组合快照" in text
+    assert "显示暂停/归档" in text
+    assert "data-snapshot-toggle-inactive" in text
+    assert "data-snapshot-status" in text
     assert "首要建议" not in text
     assert "真推进" not in text
     assert "假性推进" not in text

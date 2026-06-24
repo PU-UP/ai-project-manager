@@ -7,8 +7,8 @@ from datetime import datetime, timedelta
 from app.datetime_util import BEIJING, _parse_timestamp
 from app.provenance import fact_text
 
-STALE_DAYS = 30
-RECENT_DAYS = 14
+STALE_DAYS = 7
+RECENT_DAYS = 5
 TRACKED_STATUSES = frozenset({"active", "maintain", "observe"})
 
 MEMORY_FIELDS = ("origin", "current_goal", "discussion_brief")
@@ -43,6 +43,13 @@ def _project_age_days(project: dict, now: datetime) -> int | None:
     if ts is None:
         return None
     return max(0, (now - ts).days)
+
+
+def _updated_at_sort_key(item: dict) -> datetime:
+    ts = _parse_timestamp(item.get("updated_at") or "")
+    if ts is None:
+        return datetime.min.replace(tzinfo=BEIJING)
+    return ts
 
 
 def build_portfolio_snapshot(projects: list[dict]) -> dict:
@@ -108,7 +115,7 @@ def build_portfolio_snapshot(projects: list[dict]) -> dict:
                 }
             )
 
-    recently_updated.sort(key=lambda x: x.get("days_since_update", 999))
+    recently_updated.sort(key=_updated_at_sort_key, reverse=True)
     stale_projects.sort(key=lambda x: -x.get("days_since_update", 0))
 
     return {

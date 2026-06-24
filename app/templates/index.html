@@ -56,17 +56,31 @@
 {% endif %}
 
 <section class="card card--snapshot">
-  <div class="card-head">
-    <h2>组合快照</h2>
-    <span class="card-meta">计算于 {{ snapshot.computed_at }} · 最近 {{ snapshot.thresholds.recent_days }} 天 / 陈旧 {{ snapshot.thresholds.stale_days }} 天</span>
+  <div class="card-head card-head--snapshot">
+    <div>
+      <h2>组合快照</h2>
+      <span class="card-meta">更新于 {{ snapshot.computed_at }} · 最近 {{ snapshot.thresholds.recent_days }} 天 / 陈旧 {{ snapshot.thresholds.stale_days }} 天</span>
+    </div>
+    <button
+      class="collapse-btn"
+      type="button"
+      data-snapshot-toggle-inactive
+      aria-pressed="false"
+    >显示暂停/归档</button>
   </div>
 
   <div class="insight-grid insight-grid--snapshot">
-    <div class="insight insight--snapshot insight--positive">
-      <h3>最近更新{% if snapshot.recently_updated %}<span class="insight-count">{{ snapshot.recently_updated | length }}</span>{% endif %}</h3>
+    {% set snapshot_inactive = ['paused', 'archived'] %}
+    <div class="insight insight--snapshot insight--snapshot-recent">
+      {% set recent_active = snapshot.recently_updated | rejectattr('status', 'in', snapshot_inactive) | list %}
+      <h3>最近更新{% if recent_active %}<span class="insight-count" data-snapshot-count>{{ recent_active | length }}</span>{% else %}<span class="insight-count" data-snapshot-count hidden></span>{% endif %}</h3>
       <ul class="snapshot-list">
         {% for item in snapshot.recently_updated %}
-        <li class="snapshot-item">
+        <li
+          class="snapshot-item"
+          data-snapshot-status="{{ item.status }}"
+          {% if item.status in snapshot_inactive %}data-snapshot-inactive{% endif %}
+        >
           <a href="/project/{{ item.id }}" class="snapshot-item__name">{{ item.name }}</a>
           <span class="snapshot-item__meta">{{ item.updated_at or '—' }}</span>
         </li>
@@ -75,11 +89,16 @@
         {% endfor %}
       </ul>
     </div>
-    <div class="insight insight--snapshot insight--warning">
-      <h3>缺少近期更新{% if snapshot.stale_projects %}<span class="insight-count">{{ snapshot.stale_projects | length }}</span>{% endif %}</h3>
+    <div class="insight insight--snapshot insight--snapshot-stale">
+      {% set stale_active = snapshot.stale_projects | rejectattr('status', 'in', snapshot_inactive) | list %}
+      <h3>缺少近期更新{% if stale_active %}<span class="insight-count" data-snapshot-count>{{ stale_active | length }}</span>{% else %}<span class="insight-count" data-snapshot-count hidden></span>{% endif %}</h3>
       <ul class="snapshot-list">
         {% for item in snapshot.stale_projects %}
-        <li class="snapshot-item">
+        <li
+          class="snapshot-item"
+          data-snapshot-status="{{ item.status }}"
+          {% if item.status in snapshot_inactive %}data-snapshot-inactive{% endif %}
+        >
           <a href="/project/{{ item.id }}" class="snapshot-item__name">{{ item.name }}</a>
           <span class="snapshot-item__meta">{{ item.days_since_update }} 天前</span>
         </li>
@@ -88,11 +107,16 @@
         {% endfor %}
       </ul>
     </div>
-    <div class="insight insight--snapshot insight--muted">
-      <h3>缺少记录{% if snapshot.missing_memory %}<span class="insight-count">{{ snapshot.missing_memory | length }}</span>{% endif %}</h3>
+    <div class="insight insight--snapshot insight--snapshot-missing">
+      {% set missing_active = snapshot.missing_memory | rejectattr('status', 'in', snapshot_inactive) | list %}
+      <h3>缺少记录{% if missing_active %}<span class="insight-count" data-snapshot-count>{{ missing_active | length }}</span>{% else %}<span class="insight-count" data-snapshot-count hidden></span>{% endif %}</h3>
       <ul class="snapshot-list">
         {% for item in snapshot.missing_memory %}
-        <li class="snapshot-item snapshot-item--stacked">
+        <li
+          class="snapshot-item snapshot-item--stacked"
+          data-snapshot-status="{{ item.status }}"
+          {% if item.status in snapshot_inactive %}data-snapshot-inactive{% endif %}
+        >
           <a href="/project/{{ item.id }}" class="snapshot-item__name">{{ item.name }}</a>
           <span class="snapshot-item__meta">{{ item.missing_field_labels | join('、') }}</span>
         </li>
@@ -101,11 +125,16 @@
         {% endfor %}
       </ul>
     </div>
-    <div class="insight insight--snapshot insight--human">
-      <h3>待用户确认{% if snapshot.pending_confirmation %}<span class="insight-count">{{ snapshot.pending_confirmation | length }}</span>{% endif %}</h3>
+    <div class="insight insight--snapshot insight--snapshot-pending">
+      {% set pending_active = snapshot.pending_confirmation | rejectattr('status', 'in', snapshot_inactive) | list %}
+      <h3>待用户确认{% if pending_active %}<span class="insight-count" data-snapshot-count>{{ pending_active | length }}</span>{% else %}<span class="insight-count" data-snapshot-count hidden></span>{% endif %}</h3>
       <ul class="snapshot-list">
         {% for item in snapshot.pending_confirmation %}
-        <li class="snapshot-item">
+        <li
+          class="snapshot-item"
+          data-snapshot-status="{{ item.status }}"
+          {% if item.status in snapshot_inactive %}data-snapshot-inactive{% endif %}
+        >
           <a href="/project/{{ item.id }}" class="snapshot-item__name">{{ item.name }}</a>
           <span class="snapshot-item__meta">{{ item.open_questions_count }} 个开放问题</span>
         </li>

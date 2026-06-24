@@ -14,6 +14,51 @@
     });
   }
 
+  function initSnapshotInactiveToggle() {
+    const card = document.querySelector(".card--snapshot");
+    const toggle = document.querySelector("[data-snapshot-toggle-inactive]");
+    if (!card || !toggle) return;
+
+    let showInactive = false;
+
+    function renderSnapshotInactive() {
+      card.classList.toggle("is-show-inactive", showInactive);
+      card.querySelectorAll(".insight--snapshot").forEach((insight) => {
+        const items = Array.from(
+          insight.querySelectorAll(".snapshot-item[data-snapshot-status]"),
+        );
+        let visible = 0;
+        items.forEach((item) => {
+          const inactive = item.hasAttribute("data-snapshot-inactive");
+          if (showInactive || !inactive) visible += 1;
+        });
+
+        const countEl = insight.querySelector("[data-snapshot-count]");
+        if (countEl) {
+          if (visible > 0) {
+            countEl.textContent = String(visible);
+            countEl.hidden = false;
+          } else {
+            countEl.hidden = true;
+          }
+        }
+      });
+
+      toggle.textContent = showInactive ? "隐藏暂停/归档" : "显示暂停/归档";
+      toggle.setAttribute("aria-pressed", showInactive ? "true" : "false");
+      toggle.classList.toggle("is-active", showInactive);
+    }
+
+    toggle.addEventListener("click", () => {
+      showInactive = !showInactive;
+      renderSnapshotInactive();
+    });
+
+    renderSnapshotInactive();
+  }
+
+  initSnapshotInactiveToggle();
+
   const timelineBody = document.querySelector("[data-timeline-body]");
   const timelineItems = Array.from(document.querySelectorAll("[data-event-date]"));
   const daysFilter = document.querySelector("[data-days-filter]");
